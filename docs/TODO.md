@@ -1,0 +1,9 @@
+- Determine if M3 Player is Connected
+- Determine Free space on Player
+- Ensure you have 500-1000 MB free
+- Index Phish Folder on M3 Determine Shows
+- Index Main Phish Folder
+- Randomly Select Shows to Fill M3
+- Launch Player with Add Folder
+  - Winamp
+  - VLC
