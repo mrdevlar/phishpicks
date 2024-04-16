@@ -10,8 +10,14 @@ readme = "README.md"
 python = "^3.11"
 pydantic = "^2.6.4"
 mutagen = "^1.47.0"
+prompt-toolkit = "^3.0.43"
 
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.plugins] # Optional super table
+
+[tool.poetry.plugins."console_scripts"]
+"phishpicks" = "phishpicks.picks:main"

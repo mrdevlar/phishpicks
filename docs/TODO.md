@@ -1,3 +1,4 @@
+- Add logging to JSON to store all loaded shows 
 - Determine if M3 Player is Connected
 - Determine Free space on Player
 - Ensure you have 500-1000 MB free
