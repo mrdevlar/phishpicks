@@ -1,8 +1,12 @@
-from pathlib import Path
+from __future__ import annotations
 import random
 import subprocess
 import shlex
+from pathlib import Path
 
+
+# @TODO: Configuration of winamp and phish_folder, command line interface
+# @TODO: Pull/Push configuration from os.path.expanduser('~/.phishpicks/') see 20240416-10-40-21
 
 def main():
     winamp = Path("C:\Program Files (x86)\Winamp\winamp.exe")
