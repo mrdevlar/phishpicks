@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker
 
 class Configuration(BaseModel):
     config_folder: Union[PathLike, Path, str] = ".phishpicks"
-    phish_folder: Union[PathLike, Path, str] = "Z:\Music\Phish"
+    phish_folder: Union[PathLike, Path, str] = "Z://Music//Phish"
     phish_db: str = "phish.db"
 
     def is_configured(self) -> bool:
@@ -52,7 +52,7 @@ class Configuration(BaseModel):
             'shows', meta,
             Column('show_id', Integer, primary_key=True),
             Column('show_date', Date),
-            Column('show_location', String),
+            Column('show_venue', String),
             Column('folder_path', String)
         )
 
