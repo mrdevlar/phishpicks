@@ -12,6 +12,7 @@ pydantic = "^2.6.4"
 mutagen = "^1.47.0"
 prompt-toolkit = "^3.0.43"
 sqlalchemy = "^2.0.29"
+pytest = "^8.1.1"
 
 
 [build-system]
