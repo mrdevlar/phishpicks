@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "phishpicks"
-version = "0.1.0"
+version = "0.2.0"
 description = "Tooling for playing and copying Phish albums"
 authors = ["Richard Podkolinski <devlar@gmail.com>"]
 license = "GPL v3"

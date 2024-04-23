@@ -8,3 +8,6 @@
 - Launch Player with Add Folder
   - Winamp
   - VLC
+- Queries
+  - Exclusion Mode - Last Played is null
+  - title: Tweezer but order by longest
