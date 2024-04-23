@@ -13,12 +13,36 @@ from mutagen.flac import FLAC
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
 import shutil
+import json
+
+
+# @TODO: Separate config from db
 
 
 class Configuration(BaseModel):
-    config_folder: Path = Path(os.path.expanduser("~/.phishpicks"))
-    phish_folder: Union[PathLike, Path, str] = "Z://Music//Phish"
+    config_file: str = "phishpicks.json"
+    config_folder: str = str(Path(os.path.expanduser("~/.phishpicks")))
+    phish_folder: str = str(Path("Z://Music//Phish"))
     phish_db: str = "phish.db"
+
+    @staticmethod
+    def from_json(config_file: str = "phishpicks.json",
+                  config_folder: str = str(Path(os.path.expanduser("~/.phishpicks")))) -> Configuration:
+        configuration_file = config_folder / Path(config_file)
+        with open(configuration_file, 'r') as file:
+            data = json.load(file)
+        config = Configuration.parse_obj(data)
+        print(config)
+        return config
+
+    def save_to_json(self):
+        configuration_file = self.config_folder / Path(self.config_file)
+        print(configuration_file)
+        # Save JSON string to file
+        with open(configuration_file, 'w') as file:
+            conf_json = json.dumps(self.dict())
+            file.write(conf_json)
+            print(f"Wrote Config to {configuration_file}")
 
     def is_configured(self) -> bool:
         """ Checks if configuration exists and is complete """
@@ -83,10 +107,6 @@ class Configuration(BaseModel):
         Index('ix_tracks_file_path', tracks.c.file_path)
         # create all tables
         meta.create_all(engine)
-
-        # start session
-        # session = sessionmaker(bind=engine)
-        # session.close_all()
 
     def populate_db(self):
         # Create engine and start session
@@ -163,7 +183,7 @@ class Configuration(BaseModel):
         print("Unsupported Files")
         print(unsupported)
 
-    def query(self):
+    def query(self) -> list:
         db_location = self.config_folder / Path(self.phish_db)
         engine = create_engine(f'sqlite:///{db_location}', echo=True)
 
@@ -186,5 +206,3 @@ class Configuration(BaseModel):
                 out_dict = {k: v for k, v in zip(columns, row)}
                 out_list.append(out_dict)
             return out_list
-
-
