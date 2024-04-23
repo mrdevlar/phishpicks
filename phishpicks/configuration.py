@@ -1,15 +1,22 @@
 from __future__ import annotations
-import os.path
+import re
+import os
 from os import PathLike
 from pathlib import Path
 from typing import Union
 from pydantic import BaseModel
-from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, Date, ForeignKey, Index
+from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, Date, ForeignKey, Index, select
+from sqlalchemy.sql import text
 from sqlalchemy.orm import sessionmaker
+from datetime import date
+from mutagen.flac import FLAC
+from mutagen.mp3 import MP3
+from mutagen.mp4 import MP4
+import shutil
 
 
 class Configuration(BaseModel):
-    config_folder: Union[PathLike, Path, str] = ".phishpicks"
+    config_folder: Path = Path(os.path.expanduser("~/.phishpicks"))
     phish_folder: Union[PathLike, Path, str] = "Z://Music//Phish"
     phish_db: str = "phish.db"
 
@@ -22,27 +29,25 @@ class Configuration(BaseModel):
         raise NotImplementedError
 
     def is_configuration_folder(self) -> bool:
-        user_folder = Path(os.path.expanduser("~"))
-        config_folder = user_folder / Path(self.config_folder)
-        return config_folder.exists()
+        return self.config_folder.exists()
 
     def is_phish_folder(self) -> bool:
         return Path(self.phish_folder).exists()
 
     def is_db(self) -> bool:
-        user_folder = Path(os.path.expanduser("~"))
-        db_location = user_folder / Path(self.config_folder) / Path(self.phish_db)
+        db_location = self.config_folder / Path(self.phish_db)
         return db_location.exists()
 
     def create_configuration_folder(self):
-        user_folder = Path(os.path.expanduser("~"))
-        config_folder = user_folder / Path(self.config_folder)
-        config_folder.mkdir(parents=False, exist_ok=True)
+        self.config_folder.mkdir(parents=False, exist_ok=True)
+
+    def delete_configuration_folder(self):
+        shutil.rmtree(self.config_folder)
+        print(f'Deleted {self.config_folder}')
 
     def create_db(self):
         self.create_configuration_folder()
-        user_folder = Path(os.path.expanduser("~"))
-        db_location = user_folder / Path(self.config_folder) / Path(self.phish_db)
+        db_location = self.config_folder / Path(self.phish_db)
         print(db_location)
         engine = create_engine(f'sqlite:///{db_location}', echo=True)
         meta = MetaData()
@@ -51,8 +56,10 @@ class Configuration(BaseModel):
         shows = Table(
             'shows', meta,
             Column('show_id', Integer, primary_key=True),
-            Column('show_date', Date),
-            Column('show_venue', String),
+            Column('date', Date),
+            Column('venue', String),
+            Column('last_played', Date, nullable=True),
+            Column('times_played', Integer, default=0),
             Column('folder_path', String)
         )
 
@@ -62,44 +69,122 @@ class Configuration(BaseModel):
             Column('track_id', Integer, primary_key=True),
             Column('show_id', Integer, ForeignKey('shows.show_id')),
             Column('track_number', Integer),
-            Column('track_name', String),
-            Column('track_filetype', String),
-            Column('track_length_sec', Integer),
+            Column('name', String),
+            Column('filetype', String),
+            Column('length_sec', Integer),
             Column('file_path', String)
         )
 
         # create indexes
-        Index('ix_shows_show_date', shows.c.show_date)
-        Index('ix_shows_show_location', shows.c.show_location)
+        Index('ix_shows_date', shows.c.date)
+        Index('ix_shows_venue', shows.c.venue)
         Index('ix_shows_folder_path', shows.c.folder_path)
-        Index('ix_tracks_track_name', tracks.c.track_name)
+        Index('ix_tracks_name', tracks.c.name)
         Index('ix_tracks_file_path', tracks.c.file_path)
         # create all tables
         meta.create_all(engine)
 
         # start session
-        session = sessionmaker(bind=engine)
-        session.close_all()
+        # session = sessionmaker(bind=engine)
+        # session.close_all()
 
-    def populate_db(self, shows_data, tracks_data):
+    def populate_db(self):
         # Create engine and start session
-        user_folder = Path(os.path.expanduser("~"))
-        db_location = user_folder / Path(self.config_folder) / Path(self.phish_db)
+        db_location = self.config_folder / Path(self.phish_db)
         print(db_location)
         engine = create_engine(f'sqlite:///{db_location}', echo=True)
+        meta = MetaData()
+        shows = Table('shows', meta, autoload_with=engine)
+        tracks = Table('tracks', meta, autoload_with=engine)
+
         Session = sessionmaker(bind=engine)
+        session = Session()
 
-        # Insert shows and tracks
-        with Session() as session:
-            for show in shows_data:
-                show_obj = shows(**show)
-                session.add(show_obj)
+        # Traverse folders and add show data to the shows table
+        for folder in Path(self.phish_folder).glob("Phish [0-9]*"):
+            # WindowsPath('Z:/Music/Phish/Phish 1989-08-26 Townshend, VT (LivePhish 09) [FLAC]')
+            show_date = folder.name[6:16]
+            venue_re = r'Phish \d\d\d\d-\d\d-\d\d (.*?.*)'
+            show_venue = re.findall(venue_re, folder.name)
+            show_venue = show_venue[0].strip() if show_venue else 'None'
+            folder_path = folder.stem
 
-            for track in tracks_data:
-                track_obj = tracks(**track)
-                session.add(track_obj)
-
+            show_insert = shows.insert().values(date=date.fromisoformat(show_date),
+                                                venue=show_venue,
+                                                folder_path=folder_path)
+            session.execute(show_insert)
             session.commit()
+
+            show_id = session.query(shows.c.show_id).filter(shows.c.folder_path == folder_path).scalar()
+
+            unsupported = []
+            print(folder)
+            for file in folder.glob("*.*"):
+                file_path = str(file)
+                track_filetype = file.suffix
+                print(file)
+                if file.suffix.lower() in ['.flac']:
+                    audio = FLAC(file)
+                    track_length_sec = int(audio.info.length)
+                    track_name = audio.get('title')[0]
+                    track_number = audio.get('tracknumber')[0]
+                    print(file)
+                elif file.suffix.lower() in ['.mp3']:
+                    audio = MP3(file)
+                    track_length_sec = int(audio.info.length)
+                    track_name = audio.tags['TIT2'][0]
+                    track_number = audio.tags['TRCK'][0]
+                    print(file)
+                elif file.suffix.lower() in ['.m4a']:
+                    audio = MP4(file)
+                    track_length_sec = int(audio.info.length)
+                    track_name = audio.tags['©nam'][0]
+                    track_number = audio.tags['trkn'][0][0]
+                    print(file)
+                else:
+                    print(f"Unsupported File: {file}")
+                    unsupported.append(str(file))
+                    continue
+                    # raise TypeError("Unsupported file format")
+
+                track_insert = tracks.insert().values(
+                    show_id=show_id,
+                    track_number=track_number,
+                    name=track_name,
+                    filetype=track_filetype,
+                    length_sec=track_length_sec,
+                    file_path=file_path,
+                )
+                session.execute(track_insert)
+                session.commit()
 
         # Close session
         session.close()
+        print("Unsupported Files")
+        print(unsupported)
+
+    def query(self):
+        db_location = self.config_folder / Path(self.phish_db)
+        engine = create_engine(f'sqlite:///{db_location}', echo=True)
+
+        metadata = MetaData()
+
+        # shows = Table('shows', metadata, autoload_with=engine)
+        table = Table('tracks', metadata, autoload_with=engine)
+        columns = [column.name for column in table.columns]
+        # create a connection
+        with engine.connect() as connection:
+            print(connection)
+            # select the table for the specific year
+            query = select(table).where(text("tracks.name LIKE '%Tweezer%'")).order_by(table.c.length_sec.desc())
+
+            result = connection.execute(query)
+            print(query)
+            # print the results
+            out_list = []
+            for row in result:
+                out_dict = {k: v for k, v in zip(columns, row)}
+                out_list.append(out_dict)
+            return out_list
+
+
