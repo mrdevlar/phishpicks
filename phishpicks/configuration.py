@@ -10,7 +10,11 @@ class Configuration(BaseModel):
     config_file: str = "phishpicks.json"
     config_folder: str = str(Path(os.path.expanduser("~/.phishpicks")))
     phish_folder: str = str(Path("Z://Music//Phish"))
+    media_player_path: str = str(Path("C://Program Files (x86)//Winamp//winamp.exe"))
     phish_db: str = "phish.db"
+    show_glob: str = "Phish [0-9]*"
+    venue_regex: str = r'Phish \d\d\d\d-\d\d-\d\d (.*?.*)'
+
 
     @staticmethod
     def from_json(config_file: str = "phishpicks.json",
@@ -34,13 +38,16 @@ class Configuration(BaseModel):
     def is_configured(self) -> bool:
         """ Checks if configuration exists and is complete """
         # Config Folder Exists?
-        # DB Exists?
-        # DB Tables Have Content?
-        # Phish Folder Exists and has Folders?
-        raise NotImplementedError
+        return all([self.is_configuration_folder(),
+                    # DB Exists?
+                    self.is_db(),
+                    # DB Tables Have Content?
+                    # Phish Folder Exists and has Folders?
+                    self.is_phish_folder()
+                    ])
 
     def is_configuration_folder(self) -> bool:
-        return self.config_folder.exists()
+        return Path(self.config_folder).exists()
 
     def is_phish_folder(self) -> bool:
         return Path(self.phish_folder).exists()
@@ -57,4 +64,4 @@ class Configuration(BaseModel):
         print(f'Deleted {self.config_folder}')
 
     def total_phish_folders(self):
-        return len(list(Path(self.phish_folder).glob("Phish [0-9]*")))
+        return len(list(Path(self.phish_folder).glob(self.show_glob)))

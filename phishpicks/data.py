@@ -4,7 +4,7 @@ from pathlib import Path
 import re
 from typing import Any
 
-from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, Date, ForeignKey, Index, select
+from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, Date, ForeignKey, Index, select, inspect, Boolean
 from sqlalchemy.sql import text
 from sqlalchemy.orm import sessionmaker
 from phishpicks.configuration import Configuration
@@ -22,13 +22,24 @@ class PhishData(BaseModel):
     meta: Any = None
     shows: Any = None
     tracks: Any = None
+    inspector: Any = None
 
     def model_post_init(self, __context: Any):
         self.db_location = self.config.config_folder / Path(self.config.phish_db)
         self.engine = create_engine(f'sqlite:///{self.db_location}', echo=True)
+        self.inspector = inspect(self.engine)
         self.meta = MetaData()
-        self.shows = Table('shows', self.meta, autoload_with=self.engine)
-        self.tracks = Table('tracks', self.meta, autoload_with=self.engine)
+
+        if self.inspector.has_table('shows'):
+            self.shows = Table('shows', self.meta, autoload_with=self.engine)
+        else:
+            print("No 'shows' table found")
+            self.shows = None
+        if self.inspector.has_table('tracks'):
+            self.tracks = Table('tracks', self.meta, autoload_with=self.engine)
+        else:
+            print("No 'tracks' table found")
+            self.shows = None
 
     def status(self):
         """ Prints the status of the Database """
@@ -50,7 +61,7 @@ class PhishData(BaseModel):
 
     def create(self):
         """ Creates a SQLite Database with the required structure"""
-        self.conf.create_configuration_folder()
+        self.config.create_configuration_folder()
 
         # define 'shows' table
         self.shows = Table(
@@ -72,6 +83,7 @@ class PhishData(BaseModel):
             Column('name', String),
             Column('filetype', String),
             Column('length_sec', Integer),
+            Column('special', Boolean, default=False),
             Column('file_path', String)
         )
 
@@ -92,10 +104,10 @@ class PhishData(BaseModel):
         session = Session()
 
         # Traverse folders and add show data to the shows table
-        for folder in Path(self.phish_folder).glob("Phish [0-9]*"):
+        for folder in Path(self.config.phish_folder).glob(self.config.show_glob):
             # WindowsPath('Z:/Music/Phish/Phish 1989-08-26 Townshend, VT (LivePhish 09) [FLAC]')
             show_date = folder.name[6:16]
-            venue_re = r'Phish \d\d\d\d-\d\d-\d\d (.*?.*)'
+            venue_re = self.config.venue_regex
             show_venue = re.findall(venue_re, folder.name)
             show_venue = show_venue[0].strip() if show_venue else 'None'
             folder_path = folder.stem
@@ -180,7 +192,24 @@ class PhishData(BaseModel):
             return out_list
 
 
-conf = Configuration.from_json()
-pd = PhishData(config=conf)
-print(pd.total_shows())
-print("ham")
+# Not configured Path
+# conf = Configuration()
+# conf.create_configuration_folder()
+# conf.save_to_json()
+# pd = PhishData(config=conf)
+# pd.create()
+# pd.populate()
+# check_folders = conf.total_phish_folders() == pd.total_shows()
+# assert check_folders
+# print(check_folders)
+
+
+# # Already Configured Path
+# conf = Configuration.from_json()
+# pd = PhishData(config=conf)
+# print(conf.is_configured())
+# print(pd.total_shows())
+
+# Delete Path
+# conf = Configuration.from_json()
+# conf.delete_configuration_folder()
