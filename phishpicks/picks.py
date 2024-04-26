@@ -25,46 +25,44 @@ class PhishPicks(BaseModel):
             total_shows = self.db.total_shows()
             return f"Total Shows: {total_shows}"
         else:
-            return f"Selected Shows\n{'\n'.join(self.picks)}"
+            selection = "__ Selected Shows __\n"
+            selection += "\n".join([repr(x) for x in self.picks])
+            return selection
 
     def random(self, k=1):
         all_shows = self.db.all_shows()
         self.picks = random.choices(all_shows, k=k)
 
-    def play(self):
-        raise NotImplementedError
+    def play(self, update=True):
+        if len(self.picks) == 1:
+            media_player = Path(self.config.media_player_path)
+            pick_folder = Path(self.picks[0].folder_path)
+            pick_folder = Path(self.config.phish_folder) / pick_folder
+            cmd = 'powershell -Command' + f"""& "{media_player}" "{pick_folder}" """
+            if update:
+                # Add times played to db
+                self.db.update_show(show_id=self.picks[0].show_id)
+            print(cmd)
+            args = shlex.split(cmd)
+            process = subprocess.Popen(args,
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE,
+                                       stdin=subprocess.PIPE,
+                                       shell=True)
+        else:
+            raise ValueError("Too many shows selected")
 
     def enqueue(self):
+        enqueue = False
+        enqueue_command = "/ADD " if enqueue else ""
         raise NotImplementedError
 
     def dap_copy(self):
         raise NotImplementedError
 
 
-def main():
-    winamp = Path("C:\Program Files (x86)\Winamp\winamp.exe")
-    phish_folder = Path("Z:\Music\Phish")
+# pp = PhishPicks.load()
+# pp.random()
+# pp.play()
+# print(pp)
 
-    possible_folders = [folder for folder in phish_folder.glob("Phish [0-9]*")]
-    selected_folder = random.choice(possible_folders)
-    print(selected_folder)
-    enqueue = False
-    enqueue_command = "/ADD " if enqueue else ""
-
-    cmd = 'powershell -Command' + f"""& "{winamp}" {enqueue_command}"{selected_folder}" """
-    print(cmd)
-
-    args = shlex.split(cmd)
-    process = subprocess.Popen(args,
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE,
-                               stdin=subprocess.PIPE,
-                               shell=True)  # Create subprocess
-    # stdout, stderr = process.communicate(input=b'y\n')  # Run command and send input, then read output
-    # process.terminate()
-    # print(stdout)  # Print output
-    # print(stderr)  # Print error output, if any
-
-
-if __name__ == '__main__':
-    main()

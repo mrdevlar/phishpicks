@@ -4,7 +4,7 @@ from pathlib import Path
 import re
 from typing import Any, Optional
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, Date, ForeignKey, Index, select, \
-    inspect, Boolean
+    inspect, Boolean, update, func
 from sqlalchemy.sql import text
 from sqlalchemy.orm import sessionmaker
 from phishpicks.configuration import Configuration
@@ -29,6 +29,9 @@ class Show(BaseModel):
         show = Show(**show_dict)
         return show
 
+    def __repr__(self):
+        return f"Phish {self.date.strftime('%Y-%m-%d')} {self.venue}"
+
 
 class PhishData(BaseModel):
     config: Configuration
@@ -41,7 +44,7 @@ class PhishData(BaseModel):
 
     def model_post_init(self, __context: Any):
         self.db_location = self.config.config_folder / Path(self.config.phish_db)
-        self.engine = create_engine(f'sqlite:///{self.db_location}', echo=False)
+        self.engine = create_engine(f'sqlite:///{self.db_location}', echo=True)
         self.inspector = inspect(self.engine)
         self.meta = MetaData()
 
@@ -140,25 +143,25 @@ class PhishData(BaseModel):
             for file in folder.glob("*.*"):
                 file_path = str(file)
                 track_filetype = file.suffix
-                print(file)
+                # print(file)
                 if file.suffix.lower() in ['.flac']:
                     audio = FLAC(file)
                     track_length_sec = int(audio.info.length)
                     track_name = audio.get('title')[0]
                     track_number = audio.get('tracknumber')[0]
-                    print(file)
+                    # print(file)
                 elif file.suffix.lower() in ['.mp3']:
                     audio = MP3(file)
                     track_length_sec = int(audio.info.length)
                     track_name = audio.tags['TIT2'][0]
                     track_number = audio.tags['TRCK'][0]
-                    print(file)
+                    # print(file)
                 elif file.suffix.lower() in ['.m4a']:
                     audio = MP4(file)
                     track_length_sec = int(audio.info.length)
                     track_name = audio.tags['©nam'][0]
                     track_number = audio.tags['trkn'][0][0]
-                    print(file)
+                    # print(file)
                 else:
                     print(f"Unsupported File: {file}")
                     unsupported.append(str(file))
@@ -194,23 +197,28 @@ class PhishData(BaseModel):
             results = connection.execute(query)
             return [Show.from_db(row) for row in results]
 
-    def query(self) -> list:
-        columns = [column.name for column in self.tracks.columns]
-        # create a connection
+    def query_shows(self, where_clause: str):
         with self.engine.connect() as connection:
-            print(connection)
-            # select the table for the specific year
-            query = select(self.tracks).where(text("tracks.name LIKE '%Tweezer%'")).order_by(
-                self.tracks.c.length_sec.desc())
+            query = select(self.shows).where(text(where_clause))
+            results = connection.execute(query)
+            return [Show.from_db(row) for row in results]
 
-            result = connection.execute(query)
-            print(query)
-            # print the results
-            out_list = []
-            for row in result:
-                out_dict = {k: v for k, v in zip(columns, row)}
-                out_list.append(out_dict)
-            return out_list
+    def show_by_id(self, show_id: int):
+        with self.engine.connect() as connection:
+            query = select(self.shows).where(self.shows.c.show_id == show_id)
+            results = connection.execute(query)
+            return [Show.from_db(row) for row in results][0]
+
+    def update_show(self, show_id: int):
+        with self.engine.connect() as connection:
+            new_last_played = date.today()
+            new_times_played = self.shows.c.times_played + 1
+            stmt = (update(self.shows)
+                    .where(self.shows.c.show_id == show_id)
+                    .values(last_played=new_last_played,
+                            times_played=new_times_played))
+            connection.execute(stmt)
+            connection.commit()
 
 # Not configured Path
 # conf = Configuration()
@@ -221,7 +229,6 @@ class PhishData(BaseModel):
 # pd.populate()
 # check_folders = conf.total_phish_folders() == pd.total_shows()
 # print(check_folders)
-
 
 # # # Already Configured Path
 # conf = Configuration.from_json()
