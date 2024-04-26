@@ -117,7 +117,6 @@ class PhishData(BaseModel):
     def populate(self):
         """ Populates the Database with show and track information"""
         # Create engine and start session
-
         Session = sessionmaker(bind=self.engine)
         session = Session()
 
@@ -184,32 +183,20 @@ class PhishData(BaseModel):
         print("Unsupported Files")
         print(unsupported)
 
-    def total_shows(self) -> int:
+    def reset_played_shows(self):
+        """ Resets the times played and last played values in show table """
         with self.engine.connect() as connection:
-            query = text("SELECT COUNT(show_id) FROM shows")
-            result = connection.execute(query)
-            total_shows = list(result)[0][0]
-            return total_shows
+            new_last_played = None
+            new_times_played = 0
+            stmt = (update(self.shows)
+                    .where(self.shows.c.times_played > 0)
+                    .values(last_played=new_last_played,
+                            times_played=new_times_played))
+            connection.execute(stmt)
+            connection.commit()
 
-    def all_shows(self) -> list:
-        with self.engine.connect() as connection:
-            query = select(self.shows)
-            results = connection.execute(query)
-            return [Show.from_db(row) for row in results]
-
-    def query_shows(self, where_clause: str):
-        with self.engine.connect() as connection:
-            query = select(self.shows).where(text(where_clause))
-            results = connection.execute(query)
-            return [Show.from_db(row) for row in results]
-
-    def show_by_id(self, show_id: int):
-        with self.engine.connect() as connection:
-            query = select(self.shows).where(self.shows.c.show_id == show_id)
-            results = connection.execute(query)
-            return [Show.from_db(row) for row in results][0]
-
-    def update_show(self, show_id: int):
+    def update_played_show(self, show_id: int):
+        """ Update a Played Show's values """
         with self.engine.connect() as connection:
             new_last_played = date.today()
             new_times_played = self.shows.c.times_played + 1
@@ -219,6 +206,35 @@ class PhishData(BaseModel):
                             times_played=new_times_played))
             connection.execute(stmt)
             connection.commit()
+
+    def total_shows(self) -> int:
+        """ Returns a count of the total number of shows """
+        with self.engine.connect() as connection:
+            query = text("SELECT COUNT(show_id) FROM shows")
+            result = connection.execute(query)
+            total_shows = list(result)[0][0]
+            return total_shows
+
+    def all_shows(self) -> list:
+        """ Returns a list of all shows """
+        with self.engine.connect() as connection:
+            query = select(self.shows)
+            results = connection.execute(query)
+            return [Show.from_db(row) for row in results]
+
+    def query_shows(self, where_clause: str):
+        """ Execute an arbitrary where on shows """
+        with self.engine.connect() as connection:
+            query = select(self.shows).where(text(where_clause))
+            results = connection.execute(query)
+            return [Show.from_db(row) for row in results]
+
+    def show_by_id(self, show_id: int) -> Show:
+        """ Return a Show given a show_id """
+        with self.engine.connect() as connection:
+            query = select(self.shows).where(self.shows.c.show_id == show_id)
+            results = connection.execute(query)
+            return [Show.from_db(row) for row in results][0]
 
 # Not configured Path
 # conf = Configuration()
