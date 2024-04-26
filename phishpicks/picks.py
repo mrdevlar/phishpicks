@@ -3,10 +3,43 @@ import random
 import subprocess
 import shlex
 from pathlib import Path
+from pydantic import BaseModel
+from phishpicks import Configuration
+from phishpicks import PhishData
 
 
-# @TODO: Configuration of winamp and phish_folder, command line interface
-# @TODO: Pull/Push configuration from os.path.expanduser('~/.phishpicks/') see 20240416-10-40-21
+class PhishPicks(BaseModel):
+    db: PhishData
+    config: Configuration
+    picks: list = []
+
+    @staticmethod
+    def load(**kwargs) -> PhishPicks:
+        config = Configuration.from_json(**kwargs)
+        db = PhishData(config=config)
+        return PhishPicks(db=db, config=config)
+
+    def __repr__(self):
+        """ Shows Summary of Phish Picks"""
+        if not self.picks:
+            total_shows = self.db.total_shows()
+            return f"Total Shows: {total_shows}"
+        else:
+            return f"Selected Shows\n{'\n'.join(self.picks)}"
+
+    def random(self, k=1):
+        all_shows = self.db.all_shows()
+        self.picks = random.choices(all_shows, k=k)
+
+    def play(self):
+        raise NotImplementedError
+
+    def enqueue(self):
+        raise NotImplementedError
+
+    def dap_copy(self):
+        raise NotImplementedError
+
 
 def main():
     winamp = Path("C:\Program Files (x86)\Winamp\winamp.exe")

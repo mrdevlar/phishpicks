@@ -2,9 +2,9 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 import re
-from typing import Any
-
-from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, Date, ForeignKey, Index, select, inspect, Boolean
+from typing import Any, Optional
+from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, Date, ForeignKey, Index, select, \
+    inspect, Boolean
 from sqlalchemy.sql import text
 from sqlalchemy.orm import sessionmaker
 from phishpicks.configuration import Configuration
@@ -13,6 +13,21 @@ from pydantic import BaseModel
 from mutagen.flac import FLAC
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
+
+
+class Show(BaseModel):
+    show_id: int
+    date: date
+    venue: str
+    last_played: Optional[date]
+    times_played: int
+    folder_path: str
+
+    @staticmethod
+    def from_db(row: tuple) -> Show:
+        show_dict = {k: v for k, v in zip(Show.model_fields.keys(), row)}
+        show = Show(**show_dict)
+        return show
 
 
 class PhishData(BaseModel):
@@ -26,7 +41,7 @@ class PhishData(BaseModel):
 
     def model_post_init(self, __context: Any):
         self.db_location = self.config.config_folder / Path(self.config.phish_db)
-        self.engine = create_engine(f'sqlite:///{self.db_location}', echo=True)
+        self.engine = create_engine(f'sqlite:///{self.db_location}', echo=False)
         self.inspector = inspect(self.engine)
         self.meta = MetaData()
 
@@ -173,6 +188,12 @@ class PhishData(BaseModel):
             total_shows = list(result)[0][0]
             return total_shows
 
+    def all_shows(self) -> list:
+        with self.engine.connect() as connection:
+            query = select(self.shows)
+            results = connection.execute(query)
+            return [Show.from_db(row) for row in results]
+
     def query(self) -> list:
         columns = [column.name for column in self.tracks.columns]
         # create a connection
@@ -191,7 +212,6 @@ class PhishData(BaseModel):
                 out_list.append(out_dict)
             return out_list
 
-
 # Not configured Path
 # conf = Configuration()
 # conf.create_configuration_folder()
@@ -200,11 +220,10 @@ class PhishData(BaseModel):
 # pd.create()
 # pd.populate()
 # check_folders = conf.total_phish_folders() == pd.total_shows()
-# assert check_folders
 # print(check_folders)
 
 
-# # Already Configured Path
+# # # Already Configured Path
 # conf = Configuration.from_json()
 # pd = PhishData(config=conf)
 # print(conf.is_configured())
