@@ -15,6 +15,25 @@ from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
 
 
+# @TODO: Backup all times played in show, all tracks special
+
+class Track(BaseModel):
+    track_id: int
+    show_id: int
+    track_number: int
+    name: str
+    filetype: str
+    length_sec: int
+    special: bool
+    file_path: str
+
+    @staticmethod
+    def from_db(row: tuple) -> Track:
+        track_dict = {k: v for k, v in zip(Track.model_fields.keys(), row)}
+        track = Track(**track_dict)
+        return track
+
+
 class Show(BaseModel):
     show_id: int
     date: date
