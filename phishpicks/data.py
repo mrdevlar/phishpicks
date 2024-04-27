@@ -20,6 +20,7 @@ from mutagen.mp4 import MP4
 class Track(BaseModel):
     track_id: int
     show_id: int
+    disc_number: int
     track_number: int
     name: str
     filetype: str
@@ -32,6 +33,10 @@ class Track(BaseModel):
         track_dict = {k: v for k, v in zip(Track.model_fields.keys(), row)}
         track = Track(**track_dict)
         return track
+
+    def __repr__(self):
+        special = "Special" if self.special else ""
+        return f"{self.disc_number}{self.track_number:02d} {self.name} {self.length_sec} {special}"
 
 
 class Show(BaseModel):
@@ -116,6 +121,7 @@ class PhishData(BaseModel):
             'tracks', self.meta,
             Column('track_id', Integer, primary_key=True),
             Column('show_id', Integer, ForeignKey('shows.show_id')),
+            Column('disc_number', Integer),
             Column('track_number', Integer),
             Column('name', String),
             Column('filetype', String),
@@ -161,24 +167,31 @@ class PhishData(BaseModel):
             for file in folder.glob("*.*"):
                 file_path = str(file)
                 track_filetype = file.suffix
+                disc_default = '0'
                 # print(file)
                 if file.suffix.lower() in ['.flac']:
                     audio = FLAC(file)
                     track_length_sec = int(audio.info.length)
                     track_name = audio.get('title')[0]
                     track_number = audio.get('tracknumber')[0]
+                    disc_number = audio.get('discnumber')
+                    disc_number = disc_number[0] if disc_number else disc_default
                     # print(file)
                 elif file.suffix.lower() in ['.mp3']:
                     audio = MP3(file)
                     track_length_sec = int(audio.info.length)
                     track_name = audio.tags['TIT2'][0]
                     track_number = audio.tags['TRCK'][0]
+                    disc_number = audio.get('TPOS')
+                    disc_number = disc_number[0] if disc_number else disc_default
                     # print(file)
                 elif file.suffix.lower() in ['.m4a']:
                     audio = MP4(file)
                     track_length_sec = int(audio.info.length)
                     track_name = audio.tags['©nam'][0]
                     track_number = audio.tags['trkn'][0][0]
+                    disc_number = audio.get('disk')
+                    disc_number = disc_number[0][0] if disc_number else disc_default
                     # print(file)
                 else:
                     print(f"Unsupported File: {file}")
@@ -188,6 +201,7 @@ class PhishData(BaseModel):
 
                 track_insert = self.tracks.insert().values(
                     show_id=show_id,
+                    disc_number=disc_number,
                     track_number=track_number,
                     name=track_name,
                     filetype=track_filetype,
@@ -248,12 +262,19 @@ class PhishData(BaseModel):
             results = connection.execute(query)
             return [Show.from_db(row) for row in results]
 
-    def show_by_id(self, show_id: int) -> Show:
+    def show_from_id(self, show_id: int) -> Show:
         """ Return a Show given a show_id """
         with self.engine.connect() as connection:
             query = select(self.shows).where(self.shows.c.show_id == show_id)
             results = connection.execute(query)
             return [Show.from_db(row) for row in results][0]
+
+    def tracks_from_show_ids(self, shows: list[Show]):
+        show_ids = [show.show_id for show in shows]
+        with self.engine.connect() as connection:
+            query = select(self.tracks).where(self.tracks.c.show_id.in_(show_ids))
+            results = connection.execute(query)
+            return [Track.from_db(row) for row in results]
 
 # Not configured Path
 # conf = Configuration()

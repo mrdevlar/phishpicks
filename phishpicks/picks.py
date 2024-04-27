@@ -29,6 +29,18 @@ class PhishPicks(BaseModel):
             selection += "\n".join([repr(x) for x in self.picks])
             return selection
 
+    def tracks(self):
+        if not self.picks:
+            raise ValueError("No show's selected")
+        else:
+            show_tracks = self.db.tracks_from_show_ids(self.picks)
+            print("__ Selected Shows __\n")
+            for pick in self.picks:
+                print(repr(pick))
+                for track in show_tracks:
+                    if track.show_id == pick.show_id:
+                        print(f"\t{repr(track)}")
+
     def random(self, k=1):
         all_shows = self.db.all_shows()
         self.picks = random.choices(all_shows, k=k)
@@ -41,7 +53,7 @@ class PhishPicks(BaseModel):
             cmd = 'powershell -Command' + f"""& "{media_player}" "{pick_folder}" """
             if update:
                 # Add times played to db
-                self.db.update_show(show_id=self.picks[0].show_id)
+                self.db.update_played_show(show_id=self.picks[0].show_id)
             print(cmd)
             args = shlex.split(cmd)
             process = subprocess.Popen(args,
@@ -61,8 +73,10 @@ class PhishPicks(BaseModel):
         raise NotImplementedError
 
 
-# pp = PhishPicks.load()
-# pp.random()
+pp = PhishPicks.load()
+pp.random(2)
+pp.tracks()
+print(pp)
 # pp.play()
 # print(pp)
 
