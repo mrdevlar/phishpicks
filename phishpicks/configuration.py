@@ -15,7 +15,6 @@ class Configuration(BaseModel):
     show_glob: str = "Phish [0-9]*"
     venue_regex: str = r'Phish \d\d\d\d-\d\d-\d\d (.*?.*)'
 
-
     @staticmethod
     def from_json(config_file: str = "phishpicks.json",
                   config_folder: str = str(Path(os.path.expanduser("~/.phishpicks")))) -> Configuration:
@@ -31,7 +30,7 @@ class Configuration(BaseModel):
         print(configuration_file)
         # Save JSON string to file
         with open(configuration_file, 'w') as file:
-            conf_json = json.dumps(self.dict())
+            conf_json = json.dumps(self.model_dump())
             file.write(conf_json)
             print(f"Wrote Config to {configuration_file}")
 
@@ -57,7 +56,7 @@ class Configuration(BaseModel):
         return db_location.exists()
 
     def create_configuration_folder(self):
-        Path(self.config_folder).mkdir(parents=False, exist_ok=True)
+        Path(self.config_folder).mkdir(parents=True, exist_ok=True)
 
     def delete_configuration_folder(self):
         shutil.rmtree(self.config_folder)

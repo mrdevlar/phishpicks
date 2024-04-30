@@ -1,15 +1,31 @@
-import pytest
-from datetime import date
-from phishpicks import Show
+from tempfile import TemporaryDirectory
+from pathlib import Path
+from phishpicks import Configuration
+from phishpicks import PhishData
 
 
-def test_show_from_db():
-    db_row = (725, date(2024, 4, 21), 'Sphere Las Vegas, NV', None, 0, 'Phish 2024-04-21 Sphere Las Vegas, NV')
-    show = Show.from_db(db_row)
-    out_dict = {'show_id': 725,
-                'date': date(2024, 4, 21),
-                'venue': 'Sphere Las Vegas, NV',
-                'last_played': None,
-                'times_played': 0,
-                'folder_path': 'Phish 2024-04-21 Sphere Las Vegas, NV'}
-    assert show.__dict__ == out_dict
+def test_configuration(settings):
+    config = Configuration(
+        config_file=settings['config_file'],
+        config_folder=str(settings['config_folder']),
+        phish_folder=str(settings['phish_folder']),
+        show_glob=settings['show_glob'],
+        venue_regex=settings['venue_regex']
+    )
+    config.create_configuration_folder()
+    config.save_to_json()
+    assert config.is_configuration_folder()
+    assert config.is_phish_folder()
+    assert config.total_phish_folders() == 2
+    assert (Path(config.config_folder) / config.config_file).exists()
+
+
+def test_db(settings):
+    config = Configuration.from_json(config_file=settings['config_file'], config_folder=settings['config_folder'])
+    pd = PhishData(config=config)
+    pd.create()
+    assert config.is_db()
+    pd.populate()
+    all_shows = pd.all_shows()
+    assert len(all_shows) == config.total_phish_folders()
+    pd.engine.dispose()

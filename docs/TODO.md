@@ -8,7 +8,7 @@
 - Index Phish Folder on M3 Determine Shows
 - Randomly Select Shows to Fill M3
 - Launch Player with Add Folder
-  - Winamp
+  - ~~Winamp~~
   - VLC
 - Queries
   - Exclusion Mode - Last Played is null

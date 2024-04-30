@@ -148,7 +148,8 @@ class PhishData(BaseModel):
         # Traverse folders and add show data to the shows table
         for folder in Path(self.config.phish_folder).glob(self.config.show_glob):
             # WindowsPath('Z:/Music/Phish/Phish 1989-08-26 Townshend, VT (LivePhish 09) [FLAC]')
-            show_date = folder.name[6:16]
+            date_re = r'\d\d\d\d-\d\d\-\d\d'
+            show_date = re.findall(date_re, folder.name)[0]
             venue_re = self.config.venue_regex
             show_venue = re.findall(venue_re, folder.name)
             show_venue = show_venue[0].strip() if show_venue else 'None'
