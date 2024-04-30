@@ -64,3 +64,7 @@ class Configuration(BaseModel):
 
     def total_phish_folders(self):
         return len(list(Path(self.phish_folder).glob(self.show_glob)))
+
+    def total_phish_songs(self):
+        """ Counts the total number of songs in the Phish folder """
+        return len(list(Path(self.phish_folder).glob(f"{self.show_glob}/*.[fFmM][lLpP4][3aA]*")))

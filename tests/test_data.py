@@ -24,8 +24,10 @@ def test_db(settings):
     config = Configuration.from_json(config_file=settings['config_file'], config_folder=settings['config_folder'])
     pd = PhishData(config=config)
     pd.create()
-    assert config.is_db()
     pd.populate()
+    assert config.is_db()
+    # Check Phish Folder Mapping
     all_shows = pd.all_shows()
     assert len(all_shows) == config.total_phish_folders()
+    assert len(pd.tracks_from_show_ids(pd.all_shows())) == config.total_phish_songs()
     pd.engine.dispose()
