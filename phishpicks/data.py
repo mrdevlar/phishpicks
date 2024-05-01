@@ -101,6 +101,14 @@ class PhishData(BaseModel):
         """ Verifies that Database has correct number of shows"""
         raise NotImplementedError
 
+    def backup_special(self):
+        """ Backs up Special Tracks Booleans """
+        raise NotImplementedError
+
+    def restore_special(self):
+        """ Restores Special Track Booleans """
+        raise NotImplementedError
+
     def create(self):
         """ Creates a SQLite Database with the required structure"""
         self.config.create_configuration_folder()
@@ -241,6 +249,14 @@ class PhishData(BaseModel):
             connection.execute(stmt)
             connection.commit()
 
+    def update_special_track(self, track_id: int):
+        with self.engine.connect() as connection:
+            stmt = (update(self.tracks)
+                    .where(self.tracks.c.track_id == track_id)
+                    .values(special=True))
+            connection.execute(stmt)
+            connection.commit()
+
     def total_shows(self) -> int:
         """ Returns a count of the total number of shows """
         with self.engine.connect() as connection:
@@ -270,10 +286,23 @@ class PhishData(BaseModel):
             results = connection.execute(query)
             return [Show.from_db(row) for row in results][0]
 
-    def tracks_from_show_ids(self, shows: list[Show]):
+    def shows_from_tracks(self, tracks: list[Track]) -> list[Show]:
+        show_ids = [track.show_id for track in tracks]
+        with self.engine.connect() as connection:
+            query = select(self.shows).where(self.shows.c.show_id.in_(show_ids))
+            results = connection.execute(query)
+            return [Show.from_db(row) for row in results]
+
+    def tracks_from_shows(self, shows: list[Show]) -> list[Track]:
         show_ids = [show.show_id for show in shows]
         with self.engine.connect() as connection:
             query = select(self.tracks).where(self.tracks.c.show_id.in_(show_ids))
+            results = connection.execute(query)
+            return [Track.from_db(row) for row in results]
+
+    def all_special_tracks(self) -> list[Track]:
+        with self.engine.connect() as connection:
+            query = select(self.tracks).where(text("tracks.special = True"))
             results = connection.execute(query)
             return [Track.from_db(row) for row in results]
 

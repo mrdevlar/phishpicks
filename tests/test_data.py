@@ -45,3 +45,23 @@ def test_db_update_played(settings):
     assert result.times_played == 1
     pd.engine.dispose()
 
+
+def test_db_update_special(settings):
+    config = Configuration.from_json(config_file=settings['config_file'], config_folder=settings['config_folder'])
+    pd = PhishData(config=config)
+    assert config.is_db()
+    pd.update_special_track(1)
+    results = pd.all_special_tracks()
+    assert len(results) == 1
+    result = results[0]
+    result_vars = vars(result)
+    expected = {'track_id': 1,
+                'show_id': 1,
+                'disc_number': 0,
+                'track_number': 1,
+                'name': 'Ghost',
+                'filetype': '.flac',
+                'length_sec': 2,
+                'special': True}
+    assert all([(result_vars[k] == v) for (k, v) in expected.items()])
+    pd.engine.dispose()
