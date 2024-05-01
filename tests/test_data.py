@@ -1,4 +1,4 @@
-from tempfile import TemporaryDirectory
+from datetime import date
 from pathlib import Path
 from phishpicks import Configuration
 from phishpicks import PhishData
@@ -20,7 +20,7 @@ def test_configuration(settings):
     assert (Path(config.config_folder) / config.config_file).exists()
 
 
-def test_db(settings):
+def test_db_build(settings):
     config = Configuration.from_json(config_file=settings['config_file'], config_folder=settings['config_folder'])
     pd = PhishData(config=config)
     pd.create()
@@ -29,5 +29,19 @@ def test_db(settings):
     # Check Phish Folder Mapping
     all_shows = pd.all_shows()
     assert len(all_shows) == config.total_phish_folders()
-    assert len(pd.tracks_from_show_ids(pd.all_shows())) == config.total_phish_songs()
+    assert len(pd.tracks_from_shows(pd.all_shows())) == config.total_phish_songs()
     pd.engine.dispose()
+
+
+def test_db_update_played(settings):
+    config = Configuration.from_json(config_file=settings['config_file'], config_folder=settings['config_folder'])
+    pd = PhishData(config=config)
+    assert config.is_db()
+    pd.update_played_show(1)
+    results = pd.query_shows('shows.show_id == 1')
+    assert len(results) == 1
+    result = results[0]
+    assert result.last_played == date.today()
+    assert result.times_played == 1
+    pd.engine.dispose()
+
