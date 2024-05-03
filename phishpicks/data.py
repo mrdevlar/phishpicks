@@ -243,8 +243,9 @@ class PhishData(BaseModel):
             connection.execute(stmt)
             connection.commit()
 
-    def update_played_show(self, show_id: int):
+    def update_played_show(self, show: Show):
         """ Update a Played Show's values """
+        show_id = show.show_id
         with self.engine.connect() as connection:
             new_last_played = date.today()
             new_times_played = self.shows.c.times_played + 1
@@ -255,13 +256,15 @@ class PhishData(BaseModel):
             connection.execute(stmt)
             connection.commit()
 
-    def update_special_track(self, track_id: int):
+    def update_special_track(self, track: Track):
+        track_id = track.track_id
         with self.engine.connect() as connection:
             stmt = (update(self.tracks)
                     .where(self.tracks.c.track_id == track_id)
                     .values(special=True))
             connection.execute(stmt)
             connection.commit()
+        print(f"Special Add: {track}")
 
     def total_shows(self) -> int:
         """ Returns a count of the total number of shows """
@@ -292,7 +295,7 @@ class PhishData(BaseModel):
             results = connection.execute(query)
             return [Track.from_db(row) for row in results]
 
-    def query_show_tracks(self, date: str, name: str):
+    def query_show_tracks(self, date: str, name: str) -> dict:
         with self.engine.connect() as connection:
             query = select(self.shows, self.tracks).where(
                 self.shows.c.date == date).where(
@@ -300,8 +303,10 @@ class PhishData(BaseModel):
                 self.shows.join(self.tracks, self.shows.c.show_id == self.tracks.c.show_id)
             )
             results = connection.execute(query)
-            results = [(Show.from_db(row[:6]), Track.from_db(row[6:])) for row in results]
-            return results
+            results = [{'show': Show.from_db(row[:6]), "track": Track.from_db(row[6:])} for row in results]
+            if len(results) > 1:
+                raise ValueError('Multiple Shows Found, Exiting')
+            return results[0]
 
     def show_from_id(self, show_id: int) -> Show:
         """ Return a Show given a show_id """
@@ -331,6 +336,27 @@ class PhishData(BaseModel):
             return [Track.from_db(row) for row in results]
 
 
+class QueryLexer(BaseModel):
+    expression: str
+    keywords: Any = None
+    identifiers: Any = None
+    operators: Any = None
+    literals: Any = None
+
+    def parse(self):
+        print(self.expression)
+        # help
+        # show
+        # track
+        # special
+        # dap
+        # dap connect
+        # dap transfer
+
+    def parse_help(self, statement):
+        raise NotImplementedError
+
+
 # Not configured Path
 # conf = Configuration()
 # conf.create_configuration_folder()
@@ -347,7 +373,7 @@ class PhishData(BaseModel):
 # pd = PhishData(config=conf)
 # pd.query_show_tracks("2015-12-30", "Free")
 # print(conf.is_configured())
-# print(pd.total_shows())
+# # print(pd.total_shows())
 
 # Delete Path
 # conf = Configuration.from_json()
