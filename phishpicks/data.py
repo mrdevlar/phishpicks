@@ -38,6 +38,12 @@ class Track(BaseModel):
         special = "Special" if self.special else ""
         return f"{self.disc_number}{self.track_number:02d} {self.name} {self.length_sec} {special}"
 
+    def to_show(self, pd: Optional[PhishData] = None):
+        if not pd:
+            conf = Configuration()
+            pd = PhishData(config=conf)
+        return pd.show_from_id(self.show_id)
+
 
 class Show(BaseModel):
     show_id: int
@@ -68,7 +74,7 @@ class PhishData(BaseModel):
 
     def model_post_init(self, __context: Any):
         self.db_location = self.config.config_folder / Path(self.config.phish_db)
-        self.engine = create_engine(f'sqlite:///{self.db_location}', echo=True)
+        self.engine = create_engine(f'sqlite:///{self.db_location}', echo=False)
         self.inspector = inspect(self.engine)
         self.meta = MetaData()
 
@@ -279,6 +285,24 @@ class PhishData(BaseModel):
             results = connection.execute(query)
             return [Show.from_db(row) for row in results]
 
+    def query_tracks(self, where_clause: str):
+        """ Execute an arbitrary where on shows """
+        with self.engine.connect() as connection:
+            query = select(self.tracks).where(text(where_clause))
+            results = connection.execute(query)
+            return [Track.from_db(row) for row in results]
+
+    def query_show_tracks(self, date: str, name: str):
+        with self.engine.connect() as connection:
+            query = select(self.shows, self.tracks).where(
+                self.shows.c.date == date).where(
+                self.tracks.c.name == name).select_from(
+                self.shows.join(self.tracks, self.shows.c.show_id == self.tracks.c.show_id)
+            )
+            results = connection.execute(query)
+            results = [(Show.from_db(row[:6]), Track.from_db(row[6:])) for row in results]
+            return results
+
     def show_from_id(self, show_id: int) -> Show:
         """ Return a Show given a show_id """
         with self.engine.connect() as connection:
@@ -306,19 +330,22 @@ class PhishData(BaseModel):
             results = connection.execute(query)
             return [Track.from_db(row) for row in results]
 
+
 # Not configured Path
 # conf = Configuration()
 # conf.create_configuration_folder()
 # conf.save_to_json()
 # pd = PhishData(config=conf)
+# print(pd)
 # pd.create()
 # pd.populate()
 # check_folders = conf.total_phish_folders() == pd.total_shows()
 # print(check_folders)
 
-# # # Already Configured Path
+# # Already Configured Path
 # conf = Configuration.from_json()
 # pd = PhishData(config=conf)
+# pd.query_show_tracks("2015-12-30", "Free")
 # print(conf.is_configured())
 # print(pd.total_shows())
 

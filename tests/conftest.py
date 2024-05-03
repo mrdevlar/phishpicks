@@ -30,6 +30,7 @@ def make_mp3(path):
 def make_m4a(path):
     silent_segment = AudioSegment.silent(duration=1000)
     file_path = Path(path) / "03 Sand.m4a"
+    # AudioSegment tags don't work for mp4
     silent_segment.export(file_path, format="mp4")
     new_tags = {
             "artist": "Phish",
