@@ -320,20 +320,31 @@ class PhishData(BaseModel):
             results = connection.execute(query)
             return [Track.from_db(row) for row in results]
 
-    def query_show_tracks(self, show_date: str, track_name: str) -> dict:
+    def select_by_date_name(self, show_date: str, track_name: str) -> dict:
+        """
+        Select a Unique Track and Show
+        This should only return one value, as the date track combo is unique.
+
+        Args:
+            show_date: Show date in 'YYYY-MM-DD' format
+            track_name: Track name wildcard, LIKE
+
+        Returns:
+            dict with ['show', 'track'] keys
+        """
         with self.engine.connect() as connection:
-            query = select(self.shows, self.tracks).where(
-                self.shows.c.date == show_date).where(
-                self.tracks.c.name == track_name.lower()).select_from(
-                self.shows.join(self.tracks, self.shows.c.show_id == self.tracks.c.show_id)
-            )
+            query = (select(self.shows, self.tracks)
+                     .where(self.shows.c.date == show_date)
+                     .where(self.tracks.c.name.like('%' + track_name.lower() + '%'))
+                     .select_from(self.shows.join(self.tracks, self.shows.c.show_id == self.tracks.c.show_id))
+                     )
             results = connection.execute(query)
             results = [{'show': Show.from_db(row[:6]), "track": Track.from_db(row[6:])} for row in results]
             if len(results) > 1:
                 print(results)
-                raise IndexError('Multiple Shows Found, Exiting')
+                raise IndexError('Multiple Tracks Found')
             elif not results:
-                raise IndexError('No Shows Found, Exiting')
+                raise IndexError('No Track Found')
             return results[0]
 
     def show_from_id(self, show_id: int) -> Show:
@@ -343,7 +354,7 @@ class PhishData(BaseModel):
             results = connection.execute(query)
             results = [Show.from_db(row) for row in results]
             if len(results) > 1:
-                raise IndexError('Multiple Shows Found, Exiting')
+                raise IndexError('Multiple Shows Found')
             return results[0]
 
     def shows_from_tracks(self, tracks: list[Track]) -> list[Show]:
@@ -396,7 +407,7 @@ class QueryLexer(BaseModel):
 # check_folders = conf.total_phish_folders() == pd.total_shows()
 # print(check_folders)
 
-# # Already Configured Path
+# # # Already Configured Path
 # conf = Configuration.from_json()
 # pd = PhishData(config=conf)
 # pd.all_show_dates()
