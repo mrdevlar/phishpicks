@@ -4,7 +4,7 @@ from pathlib import Path
 import re
 from typing import Any, Optional
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, Date, ForeignKey, Index, select, \
-    inspect, Boolean, update, func
+    inspect, Boolean, update, func, distinct
 from sqlalchemy.sql import text
 from sqlalchemy.orm import sessionmaker
 from phishpicks.configuration import Configuration
@@ -36,13 +36,13 @@ class Track(BaseModel):
 
     def __repr__(self):
         special = "Special" if self.special else ""
-        return f"{self.disc_number}{self.track_number:02d} {self.name} {self.length_sec} {special}"
+        return f"{self.disc_number}{self.track_number:02d} {self.name.title()} {self.length_sec} {special}"
 
-    def to_show(self, pd: Optional[PhishData] = None):
-        if not pd:
+    def to_show(self, phish_data: Optional[PhishData] = None):
+        if not phish_data:
             conf = Configuration()
-            pd = PhishData(config=conf)
-        return pd.show_from_id(self.show_id)
+            phish_data = PhishData(config=conf)
+        return phish_data.show_from_id(self.show_id)
 
 
 class Show(BaseModel):
@@ -60,7 +60,7 @@ class Show(BaseModel):
         return show
 
     def __repr__(self):
-        return f"Phish {self.date.strftime('%Y-%m-%d')} {self.venue}"
+        return f"Phish {self.date.strftime('%Y-%m-%d')} {self.venue.title()}"
 
 
 class PhishData(BaseModel):
@@ -166,7 +166,7 @@ class PhishData(BaseModel):
             show_date = re.findall(date_re, folder.name)[0]
             venue_re = self.config.venue_regex
             show_venue = re.findall(venue_re, folder.name)
-            show_venue = show_venue[0].strip() if show_venue else 'None'
+            show_venue = show_venue[0].strip().lower() if show_venue else 'None'
             folder_path = folder.stem
 
             show_insert = self.shows.insert().values(date=date.fromisoformat(show_date),
@@ -218,7 +218,7 @@ class PhishData(BaseModel):
                     show_id=show_id,
                     disc_number=disc_number,
                     track_number=track_number,
-                    name=track_name,
+                    name=track_name.lower(),
                     filetype=track_filetype,
                     length_sec=track_length_sec,
                     file_path=file_path,
@@ -274,38 +274,66 @@ class PhishData(BaseModel):
             total_shows = list(result)[0][0]
             return total_shows
 
-    def all_shows(self) -> list:
+    def all_shows(self) -> list[Show]:
         """ Returns a list of all shows """
         with self.engine.connect() as connection:
             query = select(self.shows)
             results = connection.execute(query)
             return [Show.from_db(row) for row in results]
 
-    def query_shows(self, where_clause: str):
+    def all_show_dates(self) -> list:
+        """ All show dates to use with autocompleter """
+        with self.engine.connect() as connection:
+            query = select(distinct(self.shows.c.date)).order_by(self.shows.c.date)
+            results = connection.execute(query)
+            results = [row[0].strftime("%Y-%m-%d") for row in results]
+            return results
+
+    def all_track_names(self) -> list:
+        """ All track names for use with autocompleter """
+        with self.engine.connect() as connection:
+            query = select(distinct(self.tracks.c.name)).order_by(self.tracks.c.name)
+            results = connection.execute(query)
+            results = [self.clean_names(row[0]) for row in results]
+            return results
+
+    @staticmethod
+    def clean_names(name: str) -> str:
+        name = name.replace("->", "")
+        name = name.replace(">", "")
+        name = name.replace("_", " ")
+        name = name.strip()
+        name = name.lower()
+        return name
+
+    def query_shows(self, where_clause: str) -> list[Show]:
         """ Execute an arbitrary where on shows """
         with self.engine.connect() as connection:
             query = select(self.shows).where(text(where_clause))
             results = connection.execute(query)
             return [Show.from_db(row) for row in results]
 
-    def query_tracks(self, where_clause: str):
+    def query_tracks(self, where_clause: str) -> list[Track]:
         """ Execute an arbitrary where on shows """
         with self.engine.connect() as connection:
             query = select(self.tracks).where(text(where_clause))
             results = connection.execute(query)
             return [Track.from_db(row) for row in results]
 
-    def query_show_tracks(self, date: str, name: str) -> dict:
+    def query_show_tracks(self, show_date: str, track_name: str) -> dict:
         with self.engine.connect() as connection:
             query = select(self.shows, self.tracks).where(
-                self.shows.c.date == date).where(
-                self.tracks.c.name == name).select_from(
+                self.shows.c.date == show_date).where(
+                self.tracks.c.name == track_name.lower()).select_from(
                 self.shows.join(self.tracks, self.shows.c.show_id == self.tracks.c.show_id)
             )
             results = connection.execute(query)
             results = [{'show': Show.from_db(row[:6]), "track": Track.from_db(row[6:])} for row in results]
             if len(results) > 1:
-                raise ValueError('Multiple Shows Found, Exiting')
+                print(results)
+                raise IndexError('Multiple Shows Found, Exiting')
+            elif not results:
+                raise IndexError('No Shows Found, Exiting')
             return results[0]
 
     def show_from_id(self, show_id: int) -> Show:
@@ -313,7 +341,10 @@ class PhishData(BaseModel):
         with self.engine.connect() as connection:
             query = select(self.shows).where(self.shows.c.show_id == show_id)
             results = connection.execute(query)
-            return [Show.from_db(row) for row in results][0]
+            results = [Show.from_db(row) for row in results]
+            if len(results) > 1:
+                raise IndexError('Multiple Shows Found, Exiting')
+            return results[0]
 
     def shows_from_tracks(self, tracks: list[Track]) -> list[Show]:
         show_ids = [track.show_id for track in tracks]
@@ -345,16 +376,13 @@ class QueryLexer(BaseModel):
 
     def parse(self):
         print(self.expression)
-        # help
-        # show
-        # track
-        # special
-        # dap
-        # dap connect
-        # dap transfer
 
-    def parse_help(self, statement):
+    def parse_date(self):
+        # /d/d/d/d-
+        # Must be in show or track state
         raise NotImplementedError
+
+
 
 
 # Not configured Path
@@ -371,9 +399,10 @@ class QueryLexer(BaseModel):
 # # Already Configured Path
 # conf = Configuration.from_json()
 # pd = PhishData(config=conf)
-# pd.query_show_tracks("2015-12-30", "Free")
+# pd.all_show_dates()
+# pd.all_track_names()
 # print(conf.is_configured())
-# # print(pd.total_shows())
+# print(pd.total_shows())
 
 # Delete Path
 # conf = Configuration.from_json()
