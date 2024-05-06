@@ -2,7 +2,7 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 import re
-from typing import Any, Optional
+from typing import Any, Optional, Tuple
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, Date, ForeignKey, Index, select, \
     inspect, Boolean, update, func, distinct
 from sqlalchemy.sql import text
@@ -47,6 +47,9 @@ class Track(BaseModel):
     def __lt__(self, other):
         return self.name < other.name
 
+    def __hash__(self) -> int:
+        return hash(self.name)
+
 
 class Show(BaseModel):
     show_id: int
@@ -70,6 +73,9 @@ class Show(BaseModel):
 
     def __eq__(self, other: object) -> bool:
         return self.date == other.date
+
+    def __hash__(self) -> int:
+        return hash(self.date)
 
 
 class PhishData(BaseModel):
@@ -237,8 +243,6 @@ class PhishData(BaseModel):
 
         # Close session
         session.close()
-        print("Unsupported Files")
-        print(unsupported)
 
     def reset_played_shows(self):
         """ Resets the times played and last played values in show table """
@@ -329,7 +333,7 @@ class PhishData(BaseModel):
             results = connection.execute(query)
             return [Track.from_db(row) for row in results]
 
-    def track_by_date_name(self, show_date: str, track_name: str) -> dict:
+    def track_by_date_name(self, show_date: str, track_name: str) -> tuple[Show, Track]:
         """
         Select a Unique Track and Show
         This should only return one value, as the date track combo is unique.
@@ -348,7 +352,7 @@ class PhishData(BaseModel):
                      .select_from(self.shows.join(self.tracks, self.shows.c.show_id == self.tracks.c.show_id))
                      )
             results = connection.execute(query)
-            results = [{'show': Show.from_db(row[:6]), "track": Track.from_db(row[6:])} for row in results]
+            results = [(Show.from_db(row[:6]), Track.from_db(row[6:])) for row in results]
             if len(results) > 1:
                 print(results)
                 raise IndexError('Multiple Tracks Found')
