@@ -333,7 +333,7 @@ class PhishData(BaseModel):
             results = connection.execute(query)
             return [Track.from_db(row) for row in results]
 
-    def track_by_date_name(self, show_date: str, track_name: str) -> tuple[Show, Track]:
+    def track_by_date_name(self, show_date: str, track_name: str, exact: bool = False) -> tuple[Show, Track]:
         """
         Select a Unique Track and Show
         This should only return one value, as the date track combo is unique.
@@ -341,16 +341,24 @@ class PhishData(BaseModel):
         Args:
             show_date: Show date in 'YYYY-MM-DD' format
             track_name: Track name wildcard, LIKE
+            exact: Exact string match?
 
         Returns:
             dict with {'show': Show, 'track': Track}
         """
         with self.engine.connect() as connection:
-            query = (select(self.shows, self.tracks)
-                     .where(self.shows.c.date == show_date)
-                     .where(self.tracks.c.name.like('%' + track_name.lower() + '%'))
-                     .select_from(self.shows.join(self.tracks, self.shows.c.show_id == self.tracks.c.show_id))
-                     )
+            if exact:
+                query = (select(self.shows, self.tracks)
+                         .where(self.shows.c.date == show_date)
+                         .where(self.tracks.c.name == track_name.lower())
+                         .select_from(self.shows.join(self.tracks, self.shows.c.show_id == self.tracks.c.show_id))
+                         )
+            else:
+                query = (select(self.shows, self.tracks)
+                         .where(self.shows.c.date == show_date)
+                         .where(self.tracks.c.name.like('%' + track_name.lower() + '%'))
+                         .select_from(self.shows.join(self.tracks, self.shows.c.show_id == self.tracks.c.show_id))
+                         )
             results = connection.execute(query)
             results = [(Show.from_db(row[:6]), Track.from_db(row[6:])) for row in results]
             if len(results) > 1:

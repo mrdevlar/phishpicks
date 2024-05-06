@@ -100,9 +100,8 @@ class PhishPicks(BaseModel):
         all_shows = self.db.all_shows()
         self.picks.extend(all_shows)
 
-    def pick_show(self, select_statement: str):
+    def pick_show(self, date):
         self.mode = 'show'
-        date, _ = self.extract_date(select_statement)
         selected_show = self.db.show_by_date(date)
         self.picks.append(selected_show)
 
@@ -134,9 +133,8 @@ class PhishPicks(BaseModel):
         else:
             raise ValueError("Unknown mode")
 
-    def pick_track(self, select_statement: str):
-        date, title = self.extract_date(select_statement)
-        show, track = self.db.track_by_date_name(date, title)
+    def pick_track(self, date_string: str, name: str, exact=False):
+        show, track = self.db.track_by_date_name(date_string, name, exact)
         self.picks.append(track)
         self.mode = 'tracks'
 
@@ -163,10 +161,29 @@ class PhishPicks(BaseModel):
         else:
             raise ValueError("Unknown mode")
 
+    def all_special(self):
+        special_tracks = self.db.all_special_tracks()
+        if self._mode == 'shows':
+            self.mode = 'tracks'
+        elif self._mode == 'tracks':
+            pass
+        else:
+            raise ValueError('Unknown mode')
+        self.picks.extend(special_tracks)
+
+    def to_special(self):
+        if self._mode == 'shows':
+            raise NotImplementedError("to_special is not available in 'shows' mode")
+        elif self._mode == 'tracks':
+            [self.db.update_special_track(track) for track in self._picks]
+        else:
+            raise ValueError('Unknown mode')
+
     @staticmethod
     def extract_date(select_statement):
         """ Extracts the date from the selection statement """
         # Regular expression to match a date in format YYYY-MM-DD
+        # @TODO: Move to UI
         date_regex = r'\d{4}-\d{2}-\d{2}'
         date_match = re.search(date_regex, select_statement)
 
@@ -200,9 +217,6 @@ class PhishPicks(BaseModel):
         else:
             raise ValueError("Too many shows selected")
 
-    def special(self, query):
-        raise NotImplementedError
-
     def enqueue(self):
         enqueue = False
         enqueue_command = "/ADD " if enqueue else ""
@@ -221,10 +235,13 @@ class PhishPicks(BaseModel):
 # pp.random()
 # pp.tracks()
 # pp.to_tracks()
-# pp.pick_track("2023-09-02 Ghost")
-# pp.pick_track("2012-06-29 Possum")
+# pp.pick_track("2023-09-02", "Ghost")
+# pp.clear()
+# date, track = pp.extract_date("2019-07-14 Mercury")
+# pp.pick_track(date, track, exact=False)
+# pp.to_special()
+# pp.pick_track("2012-06-29", "Possum")
 # pp.shows()
-# pp.pick_track("Ghost 2023-09-02")
 # print(pp)
 # pp.play()
 # print(pp)
