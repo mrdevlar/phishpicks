@@ -44,6 +44,9 @@ class Track(BaseModel):
             phish_data = PhishData(config=conf)
         return phish_data.show_from_id(self.show_id)
 
+    def __lt__(self, other):
+        return self.name < other.name
+
 
 class Show(BaseModel):
     show_id: int
@@ -61,6 +64,12 @@ class Show(BaseModel):
 
     def __repr__(self):
         return f"Phish {self.date.strftime('%Y-%m-%d')} {self.venue.title()}"
+
+    def __lt__(self, other):
+        return self.date < other.date
+
+    def __eq__(self, other: object) -> bool:
+        return self.date == other.date
 
 
 class PhishData(BaseModel):
@@ -187,7 +196,7 @@ class PhishData(BaseModel):
                 if file.suffix.lower() in ['.flac']:
                     audio = FLAC(file)
                     track_length_sec = int(audio.info.length)
-                    track_name = audio.get('title')[0]
+                    track_name = self.clean_names(audio.get('title')[0])
                     track_number = audio.get('tracknumber')[0]
                     disc_number = audio.get('discnumber')
                     disc_number = disc_number[0] if disc_number else disc_default
@@ -195,7 +204,7 @@ class PhishData(BaseModel):
                 elif file.suffix.lower() in ['.mp3']:
                     audio = MP3(file)
                     track_length_sec = int(audio.info.length)
-                    track_name = audio.tags['TIT2'][0]
+                    track_name = self.clean_names(audio.tags['TIT2'][0])
                     track_number = audio.tags['TRCK'][0]
                     disc_number = audio.get('TPOS')
                     disc_number = disc_number[0] if disc_number else disc_default
@@ -203,7 +212,7 @@ class PhishData(BaseModel):
                 elif file.suffix.lower() in ['.m4a']:
                     audio = MP4(file)
                     track_length_sec = int(audio.info.length)
-                    track_name = audio.tags['©nam'][0]
+                    track_name = self.clean_names(audio.tags['©nam'][0])
                     track_number = audio.tags['trkn'][0][0]
                     disc_number = audio.get('disk')
                     disc_number = disc_number[0][0] if disc_number else disc_default
@@ -277,7 +286,7 @@ class PhishData(BaseModel):
     def all_shows(self) -> list[Show]:
         """ Returns a list of all shows """
         with self.engine.connect() as connection:
-            query = select(self.shows)
+            query = select(self.shows).order_by(self.shows.c.date)
             results = connection.execute(query)
             return [Show.from_db(row) for row in results]
 
@@ -320,7 +329,7 @@ class PhishData(BaseModel):
             results = connection.execute(query)
             return [Track.from_db(row) for row in results]
 
-    def select_by_date_name(self, show_date: str, track_name: str) -> dict:
+    def track_by_date_name(self, show_date: str, track_name: str) -> dict:
         """
         Select a Unique Track and Show
         This should only return one value, as the date track combo is unique.
@@ -330,7 +339,7 @@ class PhishData(BaseModel):
             track_name: Track name wildcard, LIKE
 
         Returns:
-            dict with ['show', 'track'] keys
+            dict with {'show': Show, 'track': Track}
         """
         with self.engine.connect() as connection:
             query = (select(self.shows, self.tracks)
@@ -347,10 +356,29 @@ class PhishData(BaseModel):
                 raise IndexError('No Track Found')
             return results[0]
 
+    def tracks_by_name(self, track_name: str) -> list[Track]:
+        with self.engine.connect() as connection:
+            query = select(self.tracks).where(self.tracks.c.name.like('%' + track_name.lower() + '%'))
+            results = connection.execute(query)
+            return [Track.from_db(row) for row in results]
+
     def show_from_id(self, show_id: int) -> Show:
         """ Return a Show given a show_id """
         with self.engine.connect() as connection:
             query = select(self.shows).where(self.shows.c.show_id == show_id)
+            results = connection.execute(query)
+            results = [Show.from_db(row) for row in results]
+            if len(results) > 1:
+                raise IndexError('Multiple Shows Found')
+            return results[0]
+
+    def show_by_date(self, show_date: str):
+        date_regex = r'\d{4}-\d{2}-\d{2}'
+        date_match = re.search(date_regex, show_date)
+        if not date_match:
+            raise TypeError('show_date must be in YYYY-MM-DD format')
+        with self.engine.connect() as connection:
+            query = select(self.shows).where(self.shows.c.date == show_date)
             results = connection.execute(query)
             results = [Show.from_db(row) for row in results]
             if len(results) > 1:
@@ -412,6 +440,7 @@ class QueryLexer(BaseModel):
 # pd = PhishData(config=conf)
 # pd.all_show_dates()
 # pd.all_track_names()
+# pd.tracks_by_name('Ghost')
 # print(conf.is_configured())
 # print(pd.total_shows())
 
