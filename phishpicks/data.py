@@ -3,14 +3,13 @@ from datetime import date
 from pathlib import Path
 import re
 import json
-from typing import Any, Optional, Tuple, List
+from typing import Any, Optional
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, Date, ForeignKey, Index, select, \
     inspect, Boolean, update, func, distinct
 from sqlalchemy.sql import text
 from sqlalchemy.orm import sessionmaker
 from phishpicks.configuration import Configuration
 from pydantic import BaseModel
-
 from mutagen.flac import FLAC
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
@@ -475,10 +474,10 @@ class QueryLexer(BaseModel):
 # print(check_folders)
 
 # # # Already Configured Path
-conf = Configuration.from_json()
-pd = PhishData(config=conf)
-# pd.backup_special()
-pd.restore_special()
+# conf = Configuration.from_json()
+# pd = PhishData(config=conf)
+# # pd.backup_special()
+# pd.restore_special()
 # pd.all_show_dates()
 # pd.all_track_names()
 # pd.tracks_by_name('Ghost')

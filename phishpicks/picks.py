@@ -116,6 +116,7 @@ class PhishPicks(BaseModel):
             raise ValueError("No tracks selected")
         else:
             show_tracks = self.db.shows_from_tracks(self.picks)
+            show_tracks.sort()
             for show in show_tracks:
                 print(repr(show))
                 if keep_tracks:
@@ -163,7 +164,9 @@ class PhishPicks(BaseModel):
 
     def all_special(self):
         special_tracks = self.db.all_special_tracks()
-        if self._mode == 'shows':
+        if not self._mode:
+            self.mode = 'tracks'
+        elif self._mode == 'shows':
             self.mode = 'tracks'
         elif self._mode == 'tracks':
             pass
