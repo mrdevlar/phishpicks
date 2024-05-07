@@ -9,6 +9,7 @@ from pydantic import BaseModel
 class Configuration(BaseModel):
     config_file: str = "phishpicks.json"
     config_folder: str = str(Path(os.path.expanduser("~/.phishpicks")))
+    backups_folder: str = str(Path(os.path.expanduser("~/.phishpicks_backups")))
     phish_folder: str = str(Path("Z://Music//Phish"))
     media_player_path: str = str(Path("C://Program Files (x86)//Winamp//winamp.exe"))
     phish_db: str = "phish.db"
@@ -57,6 +58,9 @@ class Configuration(BaseModel):
 
     def create_configuration_folder(self):
         Path(self.config_folder).mkdir(parents=True, exist_ok=True)
+
+    def create_backups_folder(self):
+        Path(self.backups_folder).mkdir(parents=True, exist_ok=True)
 
     def delete_configuration_folder(self):
         shutil.rmtree(self.config_folder)

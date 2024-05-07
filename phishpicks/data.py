@@ -2,7 +2,8 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 import re
-from typing import Any, Optional, Tuple
+import json
+from typing import Any, Optional, Tuple, List
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, Date, ForeignKey, Index, select, \
     inspect, Boolean, update, func, distinct
 from sqlalchemy.sql import text
@@ -38,17 +39,17 @@ class Track(BaseModel):
         special = "Special" if self.special else ""
         return f"{self.disc_number}{self.track_number:02d} {self.name.title()} {self.length_sec} {special}"
 
-    def to_show(self, phish_data: Optional[PhishData] = None):
-        if not phish_data:
-            conf = Configuration()
-            phish_data = PhishData(config=conf)
-        return phish_data.show_from_id(self.show_id)
-
     def __lt__(self, other):
         return self.name < other.name
 
     def __hash__(self) -> int:
         return hash(self.name)
+
+    def to_show(self, phish_data: Optional[PhishData] = None):
+        if not phish_data:
+            conf = Configuration()
+            phish_data = PhishData(config=conf)
+        return phish_data.show_from_id(self.show_id)
 
 
 class Show(BaseModel):
@@ -124,11 +125,27 @@ class PhishData(BaseModel):
 
     def backup_special(self):
         """ Backs up Special Tracks Booleans """
-        raise NotImplementedError
+        special_tracks = self.all_special_show_tracks()
+        backup_folder = Path(self.config.backups_folder)
+        backup_json = backup_folder / Path('special_backup.json')
+        # Convert list[Tracks] to list[dict]
+        backup_list = [(show.date.strftime('%Y-%m-%d'), track.name) for show, track in special_tracks]
+        with open(backup_json, 'w') as file:
+            json.dump(backup_list, file)
+        print(f"Wrote Special Backup to {backup_json}")
 
     def restore_special(self):
         """ Restores Special Track Booleans """
-        raise NotImplementedError
+        backup_folder = Path(self.config.backups_folder)
+        backup_json = backup_folder / Path('special_backup.json')
+        if not backup_json.exists():
+            raise FileNotFoundError("'special_backup.json' is not found")
+        else:
+            with open(backup_json, 'r') as file:
+                backup_list = json.load(file)
+            special_tracks = [self.track_by_date_name(date, name, exact=True)[1] for date, name in backup_list]
+            for track in special_tracks:
+                self.update_special_track(track)
 
     def create(self):
         """ Creates a SQLite Database with the required structure"""
@@ -417,6 +434,16 @@ class PhishData(BaseModel):
             results = connection.execute(query)
             return [Track.from_db(row) for row in results]
 
+    def all_special_show_tracks(self) -> list[tuple[Show, Track]]:
+        with self.engine.connect() as connection:
+            query = (select(self.shows, self.tracks)
+                     .where(text("tracks.special = True"))
+                     .select_from(self.shows.join(self.tracks, self.shows.c.show_id == self.tracks.c.show_id))
+                     )
+            results = connection.execute(query)
+            results = [(Show.from_db(row[:6]), Track.from_db(row[6:])) for row in results]
+            return results
+
 
 class QueryLexer(BaseModel):
     expression: str
@@ -448,8 +475,10 @@ class QueryLexer(BaseModel):
 # print(check_folders)
 
 # # # Already Configured Path
-# conf = Configuration.from_json()
-# pd = PhishData(config=conf)
+conf = Configuration.from_json()
+pd = PhishData(config=conf)
+# pd.backup_special()
+pd.restore_special()
 # pd.all_show_dates()
 # pd.all_track_names()
 # pd.tracks_by_name('Ghost')
