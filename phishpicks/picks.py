@@ -209,7 +209,7 @@ class PhishPicks(BaseModel):
             cmd = 'powershell -Command' + f"""& "{media_player}" "{pick_folder}" """
             if update:
                 # Add times played to db
-                self.db.update_played_show(show_id=self.picks[0].show_id)
+                self.db.update_played_show(self.picks[0])
             print(cmd)
             args = shlex.split(cmd)
             process = subprocess.Popen(args,
@@ -235,6 +235,7 @@ class PhishPicks(BaseModel):
 #     pp.play()
 # pp = PhishPicks.load()
 # pp.random()
+# pp.play()
 # pp.random()
 # pp.tracks()
 # pp.to_tracks()
