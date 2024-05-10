@@ -1,7 +1,6 @@
 import os
 import re
 from typing import Union
-from mutagen.flac import FLAC
 from mutagen.mp4 import MP4
 from mutagen.easyid3 import EasyID3
 from mutagen.easymp4 import EasyMP4Tags
@@ -209,4 +208,11 @@ def validate_tags(phish_folder: Path = Path("Z://Music//Phish")):
     return out_set
 
 
+# out_set = validate_tags()
+# print(out_set)
 
+# fix_shows = [
+#     WindowsPath('Z:/Music/Phish/Phish 1999-06-30 Verizon Wireless Amphitheater Kansas City Bonner Springs, KS, USA'),
+#
+# ]
+# fix_missing_tags(str(fix_shows[0]), venue="Bonner Springs")

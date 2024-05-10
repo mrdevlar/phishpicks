@@ -135,9 +135,9 @@ class PhishPicks(BaseModel):
             raise ValueError("Unknown mode")
 
     def pick_track(self, show_date: str, track_name: str, exact=False):
+        self.mode = 'tracks'
         show, track = self.db.track_by_date_name(show_date, track_name, exact)
         self.picks.append(track)
-        self.mode = 'tracks'
 
     def tracks(self):
         if self._mode == 'tracks':
