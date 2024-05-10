@@ -134,8 +134,8 @@ class PhishPicks(BaseModel):
         else:
             raise ValueError("Unknown mode")
 
-    def pick_track(self, date_string: str, name: str, exact=False):
-        show, track = self.db.track_by_date_name(date_string, name, exact)
+    def pick_track(self, show_date: str, track_name: str, exact=False):
+        show, track = self.db.track_by_date_name(show_date, track_name, exact)
         self.picks.append(track)
         self.mode = 'tracks'
 
@@ -181,25 +181,6 @@ class PhishPicks(BaseModel):
             [self.db.update_special_track(track) for track in self._picks]
         else:
             raise ValueError('Unknown mode')
-
-    @staticmethod
-    def extract_date(select_statement):
-        """ Extracts the date from the selection statement """
-        # Regular expression to match a date in format YYYY-MM-DD
-        # @TODO: Move to UI
-        date_regex = r'\d{4}-\d{2}-\d{2}'
-        date_match = re.search(date_regex, select_statement)
-
-        # If a date is found, return it and everything else
-        if date_match:
-            date_str = date_match.group(0)
-            date_obj = datetime.strptime(date_str, '%Y-%m-%d')
-            date = date_obj.strftime('%Y-%m-%d')
-
-            rest = select_statement.replace(date_str, '').strip()
-            return date, rest
-        else:
-            return None, select_statement
 
     def play(self, update=True):
         if len(self.picks) == 1:
