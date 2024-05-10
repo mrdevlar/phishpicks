@@ -101,7 +101,7 @@ class PhishPicks(BaseModel):
         self.picks.extend(all_shows)
 
     def pick_show(self, date):
-        self.mode = 'show'
+        self.mode = 'shows'
         selected_show = self.db.show_by_date(date)
         self.picks.append(selected_show)
 
