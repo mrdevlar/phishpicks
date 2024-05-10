@@ -198,7 +198,7 @@ class PhishData(BaseModel):
             venue_re = self.config.venue_regex
             show_venue = re.findall(venue_re, folder.name)
             show_venue = show_venue[0].strip().lower() if show_venue else 'None'
-            folder_path = folder.stem
+            folder_path = folder.name
 
             show_insert = self.shows.insert().values(date=date.fromisoformat(show_date),
                                                      venue=show_venue,
