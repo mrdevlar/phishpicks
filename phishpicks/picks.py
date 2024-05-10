@@ -1,10 +1,8 @@
 from __future__ import annotations
 import random
-import re
 import subprocess
 import shlex
 from pathlib import Path
-from datetime import datetime
 from typing import Any
 from pydantic import BaseModel, Field
 from phishpicks import Configuration
@@ -182,33 +180,30 @@ class PhishPicks(BaseModel):
         else:
             raise ValueError('Unknown mode')
 
-    def play(self, update=True):
-        if len(self.picks) == 1:
-            media_player = Path(self.config.media_player_path)
-            pick_folder = Path(self.picks[0].folder_path)
-            pick_folder = Path(self.config.phish_folder) / pick_folder
-            cmd = 'powershell -Command' + f"""& "{media_player}" "{pick_folder}" """
-            if update:
-                # Add times played to db
-                self.db.update_played_show(self.picks[0])
-            print(cmd)
-            args = shlex.split(cmd)
-            process = subprocess.Popen(args,
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE,
-                                       stdin=subprocess.PIPE,
-                                       shell=True)
+    def play(self, enqueue: bool = True, update: bool = False):
+        if self._mode == 'shows':
+            picks_folders = [str(Path(self.config.phish_folder)) + "\\" + pick.folder_path for pick in self.picks]
+        elif self._mode == 'tracks':
+            picks_folders = [pick.file_path for pick in self.picks]
         else:
-            raise ValueError("Too many shows selected")
-
-    def enqueue(self):
-        enqueue = False
-        enqueue_command = "/ADD " if enqueue else ""
-        raise NotImplementedError
+            raise ValueError('Unknown mode')
+        media_player = Path(self.config.media_player_path)
+        sep = '" "'
+        add = " /ADD " if enqueue else ""
+        cmd = 'powershell -Command' + f"""& "{media_player}"{add}"{sep.join(picks_folders)}" """
+        if update and self._mode == 'shows':
+            # Add times played to db
+            [self.db.update_played_show(pick) for pick in self.picks]
+        print(cmd)
+        args = shlex.split(cmd)
+        process = subprocess.Popen(args,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE,
+                                   stdin=subprocess.PIPE,
+                                   shell=True)
 
     def dap_copy(self):
         raise NotImplementedError
-
 
 # def main():
 #     pp = PhishPicks.load()
@@ -216,11 +211,13 @@ class PhishPicks(BaseModel):
 #     pp.play()
 # pp = PhishPicks.load()
 # pp.random()
-# pp.play()
 # pp.random()
+# pp.play()
 # pp.tracks()
 # pp.to_tracks()
 # pp.pick_track("2023-09-02", "Ghost")
+# pp.pick_track("2019-07-14", "Mercury")
+# pp.play()
 # pp.clear()
 # date, track = pp.extract_date("2019-07-14 Mercury")
 # pp.pick_track(date, track, exact=False)
