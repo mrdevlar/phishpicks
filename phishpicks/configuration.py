@@ -4,6 +4,7 @@ import os
 import shutil
 from pathlib import Path
 from pydantic import BaseModel
+from typing import Any
 
 
 class Configuration(BaseModel):
@@ -15,6 +16,13 @@ class Configuration(BaseModel):
     phish_db: str = "phish.db"
     show_glob: str = "Phish [0-9]*"
     venue_regex: str = r'Phish \d\d\d\d-\d\d-\d\d (.*?.*)'
+    configured: dict = None
+
+    def model_post_init(self, __context: Any):
+        is_config = self.is_configured()
+        if not is_config:
+            for key, value in self.configured.items():
+                print(f"{key!s:>25}: {value}")
 
     @staticmethod
     def from_json(config_file: str = "phishpicks.json",
@@ -37,24 +45,33 @@ class Configuration(BaseModel):
 
     def is_configured(self) -> bool:
         """ Checks if configuration exists and is complete """
-        # Config Folder Exists?
-        return all([self.is_configuration_folder(),
-                    # DB Exists?
-                    self.is_db(),
-                    # DB Tables Have Content?
-                    # Phish Folder Exists and has Folders?
-                    self.is_phish_folder()
-                    ])
+        self.configured = {'is_configuration_folder': self.is_configuration_folder(),
+                           'is_configuration_file': self.is_configuration_file(),
+                           'is_db': self.is_db(),
+                           'is_backups_folder': self.is_backups_folder(),
+                           'is_media_player': self.is_media_player(),
+                           'is_phish_folder': self.is_phish_folder()}
+        is_config = all([values for values in self.configured.values()])
+        return is_config
+
+    def is_configuration_file(self) -> bool:
+        return (Path(self.config_folder) / Path(self.config_file)).exists()
 
     def is_configuration_folder(self) -> bool:
         return Path(self.config_folder).exists()
 
-    def is_phish_folder(self) -> bool:
-        return Path(self.phish_folder).exists()
+    def is_backups_folder(self) -> bool:
+        return Path(self.backups_folder).exists()
 
     def is_db(self) -> bool:
         db_location = self.config_folder / Path(self.phish_db)
         return db_location.exists()
+
+    def is_media_player(self) -> bool:
+        return Path(self.media_player_path).exists()
+
+    def is_phish_folder(self) -> bool:
+        return Path(self.phish_folder).exists()
 
     def create_configuration_folder(self):
         Path(self.config_folder).mkdir(parents=True, exist_ok=True)
@@ -66,9 +83,24 @@ class Configuration(BaseModel):
         shutil.rmtree(self.config_folder)
         print(f'Deleted {self.config_folder}')
 
-    def total_phish_folders(self):
+    def total_phish_folders(self) -> int:
         return len(list(Path(self.phish_folder).glob(self.show_glob)))
 
-    def total_phish_songs(self):
+    def total_phish_songs(self) -> int:
         """ Counts the total number of songs in the Phish folder """
         return len(list(Path(self.phish_folder).glob(f"{self.show_glob}/*.[fFmM][lLpP4][3aA]*")))
+
+    def configure(self):
+        if not self.configured['is_phish_folder']:
+            raise FileNotFoundError("Phish folder not found")
+        if not self.configured['is_media_player']:
+            raise FileNotFoundError("Media player not found")
+        if not self.configured['is_backups_folder']:
+            self.create_backups_folder()
+        if not self.configured['is_configuration_folder']:
+            self.create_configuration_folder()
+        if not self.configured['is_configuration_file']:
+            self.save_to_json()
+        if not self.configured['is_db']:
+            # @TODO: Configure DB
+            print('Please run db.configuration')
