@@ -18,11 +18,20 @@ class Configuration(BaseModel):
     venue_regex: str = r'Phish \d\d\d\d-\d\d-\d\d (.*?.*)'
     configured: dict = None
 
-    def model_post_init(self, __context: Any):
+    def __repr__(self):
         is_config = self.is_configured()
-        if not is_config:
+        if is_config:
+            return BaseModel.__repr__(self)
+        else:
             for key, value in self.configured.items():
                 print(f"{key!s:>25}: {value}")
+            return BaseModel.__repr__(self)
+
+    def model_post_init(self, __context: Any):
+        is_config = self.is_configured()
+        # if not is_config:
+        #     for key, value in self.configured.items():
+        #         print(f"{key!s:>25}: {value}")
 
     @staticmethod
     def from_json(config_file: str = "phishpicks.json",
@@ -79,6 +88,13 @@ class Configuration(BaseModel):
     def create_backups_folder(self):
         Path(self.backups_folder).mkdir(parents=True, exist_ok=True)
 
+    def create_configure_db(self):
+        # Might be tight coupling...
+        from phishpicks import PhishData
+        db = PhishData(config=self)
+        db.create()
+        db.populate()
+
     def delete_configuration_folder(self):
         shutil.rmtree(self.config_folder)
         print(f'Deleted {self.config_folder}')
@@ -102,5 +118,4 @@ class Configuration(BaseModel):
         if not self.configured['is_configuration_file']:
             self.save_to_json()
         if not self.configured['is_db']:
-            # @TODO: Configure DB
-            print('Please run db.configuration')
+            self.create_configure_db()
