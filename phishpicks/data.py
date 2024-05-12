@@ -6,7 +6,7 @@ import json
 from typing import Any, Optional
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, Date, ForeignKey, Index, select, \
     inspect, Boolean, update, func, distinct
-from sqlalchemy.sql import text
+from sqlalchemy.sql import text, delete
 from sqlalchemy.orm import sessionmaker
 from phishpicks.configuration import Configuration
 from pydantic import BaseModel
@@ -118,10 +118,6 @@ class PhishData(BaseModel):
         else:
             raise FileNotFoundError(f"Configuration Folder {self.config.config_folder} does not exist")
 
-    def verify(self):
-        """ Verifies that Database has correct number of shows"""
-        raise NotImplementedError
-
     def backup_special(self):
         """ Backs up Special Tracks Booleans """
         special_tracks = self.all_special_show_tracks()
@@ -148,8 +144,6 @@ class PhishData(BaseModel):
 
     def create(self):
         """ Creates a SQLite Database with the required structure"""
-        self.config.create_configuration_folder()
-
         # define 'shows' table
         self.shows = Table(
             'shows', self.meta,
@@ -158,7 +152,8 @@ class PhishData(BaseModel):
             Column('venue', String),
             Column('last_played', Date, nullable=True),
             Column('times_played', Integer, default=0),
-            Column('folder_path', String)
+            Column('folder_path', String),
+            # extend_existing=True  # Set this parameter to True
         )
 
         # define 'tracks' table
@@ -172,7 +167,8 @@ class PhishData(BaseModel):
             Column('filetype', String),
             Column('length_sec', Integer),
             Column('special', Boolean, default=False),
-            Column('file_path', String)
+            Column('file_path', String),
+            # extend_existing=True  # Set this parameter to True
         )
 
         # create indexes
@@ -183,6 +179,7 @@ class PhishData(BaseModel):
         Index('ix_tracks_file_path', self.tracks.c.file_path)
         # create all tables
         self.meta.create_all(self.engine)
+        self.meta.reflect(self.engine)
 
     def populate(self):
         """ Populates the Database with show and track information"""
@@ -259,6 +256,29 @@ class PhishData(BaseModel):
 
         # Close session
         session.close()
+
+    def drop_all(self):
+        with self.engine.connect() as connection:
+            # Delete all rows from the shows table
+            stmt_shows = delete(self.shows)
+            connection.execute(stmt_shows)
+
+            # Delete all rows from the tracks table
+            stmt_tracks = delete(self.tracks)
+            connection.execute(stmt_tracks)
+
+            # Remove all indexes
+            Index('ix_shows_date', self.shows.c.date).drop(bind=connection, checkfirst=True)
+            Index('ix_shows_venue', self.shows.c.venue).drop(bind=connection, checkfirst=True)
+            Index('ix_shows_folder_path', self.shows.c.folder_path).drop(bind=connection, checkfirst=True)
+            Index('ix_tracks_name', self.tracks.c.name).drop(bind=connection, checkfirst=True)
+            Index('ix_tracks_file_path', self.tracks.c.file_path).drop(bind=connection, checkfirst=True)
+
+            # Commit the transaction
+            # self.meta.reflect(connection)
+            self.meta.drop_all(connection)
+            connection.commit()
+            print("Dropping Tables")
 
     def reset_played_shows(self):
         """ Resets the times played and last played values in show table """
@@ -348,6 +368,16 @@ class PhishData(BaseModel):
             query = select(self.tracks).where(text(where_clause))
             results = connection.execute(query)
             return [Track.from_db(row) for row in results]
+
+    def track_from_id(self, track_id: int) -> Track:
+        """ Return a Track given a track_id """
+        with self.engine.connect() as connection:
+            query = select(self.tracks).where(self.tracks.c.track_id == track_id)
+            results = connection.execute(query)
+            results = [Track.from_db(row) for row in results]
+            if len(results) > 1:
+                raise IndexError('Multiple Shows Found')
+            return results[0]
 
     def track_by_date_name(self, show_date: str, track_name: str, exact: bool = False) -> tuple[Show, Track]:
         """
@@ -453,24 +483,6 @@ class PhishData(BaseModel):
             return results
 
 
-class QueryLexer(BaseModel):
-    expression: str
-    keywords: Any = None
-    identifiers: Any = None
-    operators: Any = None
-    literals: Any = None
-
-    def parse(self):
-        print(self.expression)
-
-    def parse_date(self):
-        # /d/d/d/d-
-        # Must be in show or track state
-        raise NotImplementedError
-
-
-
-
 # Not configured Path
 # conf = Configuration()
 # conf.create_configuration_folder()
@@ -485,6 +497,7 @@ class QueryLexer(BaseModel):
 # # # Already Configured Path
 # conf = Configuration.from_json()
 # pd = PhishData(config=conf)
+# pd.drop_all()
 # # pd.backup_special()
 # pd.restore_special()
 # pd.all_show_dates()
