@@ -80,7 +80,11 @@ class PhishPicks(BaseModel):
 
     @staticmethod
     def load(**kwargs) -> PhishPicks:
-        config = Configuration.from_json(**kwargs)
+        config = Configuration(**kwargs)
+        if config.is_configuration_file():
+            config = Configuration.from_json(**kwargs)
+        else:
+            config.configure()
         db = PhishData(config=config)
         return PhishPicks(db=db, config=config)
 
