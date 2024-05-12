@@ -21,7 +21,7 @@ pydub = "^0.25.1"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-#[tool.poetry.plugins] # Optional super table
+[tool.poetry.plugins] # Optional super table
 
-#[tool.poetry.plugins."console_scripts"]
-#"phishpicks" = "phishpicks.picks:main"
+[tool.poetry.plugins."console_scripts"]
+"phishpicks" = "phishpicks.command:main"

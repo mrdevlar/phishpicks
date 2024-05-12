@@ -11,6 +11,7 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.shortcuts import CompleteStyle
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.formatted_text import HTML
 
 
 class PhishCommand(BaseModel):
@@ -19,7 +20,7 @@ class PhishCommand(BaseModel):
     keys: Any = None
     session: Any = None
     _mode: str = 'main'
-    available_modes: list = ['main', 'help', 'show', 'track', 'exit']
+    available_modes: list = ['main', 'help', 'shows', 'tracks', 'exit']
 
     # @TODO: Add upward history
 
@@ -46,7 +47,8 @@ class PhishCommand(BaseModel):
         def _(event):
             # print(event.is_repeat)
             # print(dir(event.app))
-            event.app.exit()
+            raise KeyboardInterrupt()
+            # event.app.exit()
             # event.app.current_buffer.exit_selection()
             # event.cli.set_return_value(Keys.ControlD)
 
@@ -61,36 +63,65 @@ class PhishCommand(BaseModel):
     def main_menu(self):
         # print(self.pick.picks)
         completer = WordCompleter(self.available_modes)
-        option = self.session.prompt('phishpicks > ', completer=completer, complete_while_typing=True,
+        option = self.session.prompt('phishpicks > ', completer=completer, placeholder='', complete_while_typing=True,
                                      key_bindings=self.kb)
         if option in self.available_modes:
             self.mode = option.strip()
         else:
             print(self.pick.picks)
 
-    def track_menu(self):
-        self.mode = 'track'
+    def shows_menu(self):
+        self.mode = 'shows'
+        date_completer = self.pick.db.all_show_dates()
+        completer = WordCompleter(date_completer, WORD=True)
+        placeholder = HTML('<style color="#888888">YYYY-MM-DD</style>')
+        shows = self.session.prompt('phishpicks > shows > ', placeholder=placeholder, completer=completer,
+                                    complete_while_typing=True, key_bindings=self.kb)
+        if not shows:
+            print(self.pick.picks)
+        else:
+            selected_show, _ = self.extract_date(shows)
+            print(selected_show)
+            if not selected_show:
+                print("Incomplete Date, Try Again")
+            else:
+                self.pick.pick_show(shows.strip())
+
+    def tracks_menu(self):
+        self.mode = 'tracks'
         date_completer = self.pick.db.all_show_dates()
         completer = DateTrackCompleter(date_completer, self.pick.db.tracks_from_date)
-        track = self.session.prompt('phishpicks > tracks > ', placeholder='YYYY-MM-DD TRACK_NAME', completer=completer,
+        placeholder = HTML('<style color="#888888">YYYY-MM-DD TRACK_NAME</style>')
+        track = self.session.prompt('phishpicks > tracks > ', placeholder=placeholder, completer=completer,
                                     complete_while_typing=True, key_bindings=self.kb)
         if not track:
-            print(self.pick.picks.__repr__())
-            self.session.app.exit()
-            print(dir(self.session.app))
-        show_date, track_name = self.extract_date(track)
-        if not show_date or not track_name:
-            print("Missing Values, Try Again")  # Format me
-            # insert the text back
+            print(self.pick.picks)
         else:
-            self.pick.pick_track(show_date, track_name)
+            show_date, track_name = self.extract_date(track)
+            if not show_date or not track_name:
+                print("Missing Values, Try Again")
+            else:
+                self.pick.pick_track(show_date, track_name)
 
     def main(self):
         while True:
             if self._mode == 'main':
-                self.main_menu()
-            elif self._mode == 'track':
-                self.track_menu()
+                try:
+                    self.main_menu()
+                except KeyboardInterrupt:
+                    break
+            elif self._mode == 'tracks':
+                try:
+                    self.tracks_menu()
+                except KeyboardInterrupt:
+                    self.mode = 'main'
+                    self.main_menu()
+            elif self._mode == 'shows':
+                try:
+                    self.shows_menu()
+                except KeyboardInterrupt:
+                    self.mode = 'main'
+                    self.main_menu()
             else:
                 break
 
@@ -168,5 +199,6 @@ class TrackAfterDateCompleter(Completer):
                 yield Completion(text=word.title(), start_position=-len(word_before_cursor))
 
 
-pc = PhishCommand.load()
-pc.main()
+def main():
+    pc = PhishCommand.load()
+    pc.main()
