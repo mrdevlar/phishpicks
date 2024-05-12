@@ -39,7 +39,7 @@ class Configuration(BaseModel):
         configuration_file = config_folder / Path(config_file)
         with open(configuration_file, 'r') as file:
             data = json.load(file)
-        config = Configuration.parse_obj(data)
+        config = Configuration.model_validate(data)
         print(config)
         return config
 
