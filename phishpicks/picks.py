@@ -10,6 +10,7 @@ from phishpicks import PhishData
 
 
 class PhishList(list):
+    """ Special list for holding picks """
     def __init__(self, *args):
         super(PhishList, self).__init__(*args)
         self._map = set()
@@ -80,6 +81,11 @@ class PhishPicks(BaseModel):
 
     @staticmethod
     def load(**kwargs) -> PhishPicks:
+        """
+        Initializes Phishpicks
+        Args:
+            **kwargs: keyword arguments to be passed to the Configuration
+        """
         config = Configuration(**kwargs)
         if config.is_configuration_file():
             config = Configuration.from_json(**kwargs)
@@ -89,26 +95,39 @@ class PhishPicks(BaseModel):
         return PhishPicks(db=db, config=config)
 
     def clear(self):
+        """ Clears the contents of the picks """
         self.picks.clear()
 
-    def random(self, k=1):
+    def random(self, k: int = 1):
+        """
+        Randomly adds k shows to picks
+        Args:
+            k: the number of shows to randomly select
+        """
         self.mode = 'shows'
         all_shows = self.db.all_shows()
         selected_shows = random.choices(all_shows, k=k)
         self.picks.extend(selected_shows)
 
     def all_shows(self):
+        """ Adds all shows to picks """
         self.mode = 'shows'
         all_shows = self.db.all_shows()
         self.picks.extend(all_shows)
 
-    def pick_show(self, date):
+    def pick_show(self, date: str):
+        """
+        Adds a selected show to picks
+        Args:
+            date: Date string in 'YYYY-MM-DD' format
+        """
         self.mode = 'shows'
         selected_show = self.db.show_by_date(date)
         self.picks.append(selected_show)
 
     def shows(self, keep_tracks: bool = False):
         """
+        Displays the shows corresponding to tracks
         Args:
             keep_tracks: Show tracks also? (Default: False)
         """
@@ -127,6 +146,7 @@ class PhishPicks(BaseModel):
                             print(f"\t{repr(track)}")
 
     def to_shows(self):
+        """ Converts the tracks in picks into shows """
         if self._mode == 'tracks':
             show_tracks = self.db.shows_from_tracks(self.picks)
             self.mode = 'shows'
@@ -137,11 +157,19 @@ class PhishPicks(BaseModel):
             raise ValueError("Unknown mode")
 
     def pick_track(self, show_date: str, track_name: str, exact=False):
+        """
+        Adds a selected track to picks
+        Args:
+            show_date: Date string in 'YYYY-MM-DD' format
+            track_name: A partial name of track
+            exact: Do you want an exact match?
+        """
         self.mode = 'tracks'
         show, track = self.db.track_by_date_name(show_date, track_name, exact)
         self.picks.append(track)
 
     def tracks(self):
+        """ Displays the tracks corresponding to the shows in picks """
         if self._mode == 'tracks':
             print("\n".join([repr(x) for x in self.picks]))
         if not self.picks:
@@ -155,6 +183,7 @@ class PhishPicks(BaseModel):
                         print(f"\t{repr(track)}")
 
     def to_tracks(self):
+        """ Converts the shows to tracks in picks """
         if self._mode == 'shows':
             show_tracks = self.db.tracks_from_shows(self.picks)
             self.mode = 'tracks'
@@ -165,6 +194,7 @@ class PhishPicks(BaseModel):
             raise ValueError("Unknown mode")
 
     def all_special(self):
+        """ Adds all special tracks to picks """
         special_tracks = self.db.all_special_tracks()
         if not self._mode:
             self.mode = 'tracks'
@@ -177,6 +207,7 @@ class PhishPicks(BaseModel):
         self.picks.extend(special_tracks)
 
     def to_special(self):
+        """ Adds all tracks in picks to special tracks """
         if self._mode == 'shows':
             raise NotImplementedError("to_special is not available in 'shows' mode")
         elif self._mode == 'tracks':
@@ -184,7 +215,13 @@ class PhishPicks(BaseModel):
         else:
             raise ValueError('Unknown mode')
 
-    def play(self, enqueue: bool = True, update: bool = False):
+    def play(self, enqueue: bool = False, update: bool = False):
+        """
+        Plays the selected picks with your media player
+        Args:
+            enqueue: Do you want to enqueue, rather than replace, to the playlist?
+            update: Do you want to update time last played?
+        """
         if self._mode == 'shows':
             picks_folders = [str(Path(self.config.phish_folder)) + "\\" + pick.folder_path for pick in self.picks]
         elif self._mode == 'tracks':
