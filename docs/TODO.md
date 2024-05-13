@@ -1,7 +1,7 @@
 - When started, should check configuration
   - Prompt user to configure
-  - Set folders
-  - Create DB and Populate
+  - ~~Set folders~~
+  - ~~Create DB and Populate~~
 - Determine if M3 Player is Connected
 - Determine Free space on Player
 - Ensure you have 500-1000 MB free
