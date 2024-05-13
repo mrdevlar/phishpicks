@@ -230,7 +230,7 @@ class PhishPicks(BaseModel):
             raise ValueError('Unknown mode')
         media_player = Path(self.config.media_player_path)
         sep = '" "'
-        add = " /ADD " if enqueue else ""
+        add = " /ADD " if enqueue else " "
         cmd = 'powershell -Command' + f"""& "{media_player}"{add}"{sep.join(picks_folders)}" """
         if update and self._mode == 'shows':
             # Add times played to db
