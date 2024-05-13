@@ -98,7 +98,7 @@ class PhishPicks(BaseModel):
         """ Clears the contents of the picks """
         self.picks.clear()
 
-    def random(self, k: int = 1):
+    def random_shows(self, k: int = 1):
         """
         Randomly adds k shows to picks
         Args:
@@ -108,6 +108,17 @@ class PhishPicks(BaseModel):
         all_shows = self.db.all_shows()
         selected_shows = random.choices(all_shows, k=k)
         self.picks.extend(selected_shows)
+
+    def random_tracks(self, k: int = 1):
+        """
+        Randomly adds k tracks to picks
+        Args:
+            k: the number of tracks to randomly select
+        """
+        self.mode = 'tracks'
+        all_tracks = self.db.all_tracks()
+        selected_tracks = random.choices(all_tracks, k=k)
+        self.picks.extend(selected_tracks)
 
     def all_shows(self):
         """ Adds all shows to picks """

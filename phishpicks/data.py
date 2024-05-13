@@ -330,6 +330,13 @@ class PhishData(BaseModel):
             results = connection.execute(query)
             return [Show.from_db(row) for row in results]
 
+    def all_tracks(self) -> list[Track]:
+        """ Returns a list of all tracks """
+        with self.engine.connect() as connection:
+            query = select(self.tracks)
+            results = connection.execute(query)
+            return [Track.from_db(row) for row in results]
+
     def all_show_dates(self) -> list:
         """ All show dates to use with autocompleter """
         with self.engine.connect() as connection:
