@@ -10,142 +10,14 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.document import Document
 from prompt_toolkit.shortcuts import CompleteStyle
 from prompt_toolkit.keys import Keys
-from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.key_binding import KeyBindings, KeyPress
 from prompt_toolkit.formatted_text import HTML
-
-
-class PhishCommand(BaseModel):
-    pick: PhishPicks
-    kb: Any = None
-    keys: Any = None
-    session: Any = None
-    _mode: str = 'main'
-    available_modes: list = ['main', 'help', 'shows', 'tracks', 'exit']
-
-    # @TODO: Add upward history
-
-    @property
-    def mode(self):
-        return self._mode
-
-    @mode.setter
-    def mode(self, value):
-        self._mode = value
-        # if value in self.available_modes:
-        #     if value != self._mode:
-        #         self.clear()
-        #     self._mode = value
-        # else:
-        #     raise TypeError(f"mode must be one of {self.available_modes}")
-
-    def model_post_init(self, __context: Any):
-        self.kb = KeyBindings()
-        self.keys = []
-        self.session = PromptSession()
-
-        @self.kb.add(Keys.ControlD)
-        def _(event):
-            # print(event.is_repeat)
-            # print(dir(event.app))
-            raise KeyboardInterrupt()
-            # event.app.exit()
-            # event.app.current_buffer.exit_selection()
-            # event.cli.set_return_value(Keys.ControlD)
-
-    @staticmethod
-    def load(**kwargs) -> PhishCommand:
-        pp = PhishPicks.load(**kwargs)
-        return PhishCommand(pick=pp)
-
-    def clear(self):
-        self.pick.clear()
-
-    def main_menu(self):
-        # print(self.pick.picks)
-        completer = WordCompleter(self.available_modes)
-        option = self.session.prompt('phishpicks > ', completer=completer, placeholder='', complete_while_typing=True,
-                                     key_bindings=self.kb)
-        if option in self.available_modes:
-            self.mode = option.strip()
-        else:
-            print(self.pick.picks)
-
-    def shows_menu(self):
-        self.mode = 'shows'
-        date_completer = self.pick.db.all_show_dates()
-        completer = WordCompleter(date_completer, WORD=True)
-        placeholder = HTML('<style color="#888888">YYYY-MM-DD</style>')
-        shows = self.session.prompt('phishpicks > shows > ', placeholder=placeholder, completer=completer,
-                                    complete_while_typing=True, key_bindings=self.kb)
-        if not shows:
-            print(self.pick.picks)
-        else:
-            selected_show, _ = self.extract_date(shows)
-            print(selected_show)
-            if not selected_show:
-                print("Incomplete Date, Try Again")
-            else:
-                self.pick.pick_show(shows.strip())
-
-    def tracks_menu(self):
-        self.mode = 'tracks'
-        date_completer = self.pick.db.all_show_dates()
-        completer = DateTrackCompleter(date_completer, self.pick.db.tracks_from_date)
-        placeholder = HTML('<style color="#888888">YYYY-MM-DD TRACK_NAME</style>')
-        track = self.session.prompt('phishpicks > tracks > ', placeholder=placeholder, completer=completer,
-                                    complete_while_typing=True, key_bindings=self.kb)
-        if not track:
-            print(self.pick.picks)
-        else:
-            show_date, track_name = self.extract_date(track)
-            if not show_date or not track_name:
-                print("Missing Values, Try Again")
-            else:
-                self.pick.pick_track(show_date, track_name)
-
-    def main(self):
-        while True:
-            if self._mode == 'main':
-                try:
-                    self.main_menu()
-                except KeyboardInterrupt:
-                    break
-            elif self._mode == 'tracks':
-                try:
-                    self.tracks_menu()
-                except KeyboardInterrupt:
-                    self.mode = 'main'
-                    self.main_menu()
-            elif self._mode == 'shows':
-                try:
-                    self.shows_menu()
-                except KeyboardInterrupt:
-                    self.mode = 'main'
-                    self.main_menu()
-            else:
-                break
-
-    @staticmethod
-    def extract_date(select_statement):
-        """ Extracts the date from the selection statement """
-        # Regular expression to match a date in format YYYY-MM-DD
-        date_regex = r'\d{4}-\d{2}-\d{2}'
-        date_match = re.search(date_regex, select_statement)
-
-        # If a date is found, return it and everything else
-        if date_match:
-            date_str = date_match.group(0)
-            date_obj = datetime.strptime(date_str, '%Y-%m-%d')
-            date = date_obj.strftime('%Y-%m-%d')
-
-            rest = select_statement.replace(date_str, '').strip()
-            return date, rest
-        else:
-            return None, select_statement
+from prompt_toolkit.styles import Style
 
 
 class DateTrackCompleter(Completer):
     def __init__(self, date_completer: list, tracks_from_date: Callable):
+        date_completer.extend(['random', 'play', 'clear'])
         self.date_completer = WordCompleter(date_completer, ignore_case=True, WORD=True)
         self.tracks_from_date = tracks_from_date
 
@@ -162,9 +34,7 @@ class DateTrackCompleter(Completer):
             # Initial Date Return
             tracks = self.tracks_from_date(date)
             if name:
-                # print(date, name)
                 track_names = [track.name for track in tracks]
-                # print(track_names)
                 track_names = TrackAfterDateCompleter(track_names)
             else:
                 track_names = WordCompleter([])
@@ -187,18 +57,216 @@ class TrackAfterDateCompleter(Completer):
         date_regex = r'(^\d{4}-\d{2}-\d{2})'
         word_before_cursor = document.text_before_cursor
         word_before_cursor = re.sub(date_regex, '', word_before_cursor).strip()
-        # print(word_before_cursor, end='\n')
-        # print(track_names)
         for word in track_names:
             word = word.lower()
-            # print(word)
-            # print(word_before_cursor)
             if word.startswith(word_before_cursor.lower()):
-                # print(word)
-                # print(track_names)
                 yield Completion(text=word.title(), start_position=-len(word_before_cursor))
 
 
-def main():
-    pc = PhishCommand.load()
-    pc.main()
+class PhishMenu(str):
+    """ Special list for menu location """
+
+    def __init__(self, *args):
+        super(PhishMenu, self).__init__(*args)
+        self._tree = []
+
+
+class PhishREPL(BaseModel):
+    pick: PhishPicks
+    kb: Any = None
+    keys: Any = None
+    session: Any = None
+    _menu: str = 'main'
+
+    @property
+    def menu(self):
+        return self._menu
+
+    @menu.setter
+    def menu(self, value):
+        self._menu = value
+
+    def model_post_init(self, __context: Any):
+        self.kb = KeyBindings()
+        self.keys = []
+        self.session = PromptSession()
+
+        # @TODO: Add ctrl backspace
+        # @TODO: Add ctrl arrows
+
+        @self.kb.add('backspace')
+        def up_menu(event):
+            buffer = event.current_buffer
+            if buffer.text == "" and buffer.cursor_position == 0:
+                raise KeyboardInterrupt
+            else:
+                buffer.delete_before_cursor(count=1)
+
+    @staticmethod
+    def load(**kwargs) -> PhishREPL:
+        pp = PhishPicks.load(**kwargs)
+        return PhishREPL(pick=pp)
+
+    @staticmethod
+    def help_menu():
+        speak_help = list()
+        speak_help.append(" ")
+        speak_help.append(" _____ COMMANDS _____ ")
+        speak_help.append("  help: This List")
+        speak_help.append(" shows: Select Shows")
+        speak_help.append("tracks: Select Tracks")
+        speak_help.append("random: Random Picks")
+        speak_help.append("  play: Play Selection with Media Player")
+        speak_help.append(" clear: Clear Picks")
+        speak_help.append("  exit: Leave")
+        speak_help.append(" ")
+        speak_help.append(" _____ KEYBOARD _____ ")
+        speak_help.append("Backspace: return to main menu / exit")
+        speak_help.append("      Tab: cycle through autocomplete")
+        speak_help.append("    Space: continues text")
+        speak_help.append("    Enter: submits command")
+        speak_help.append(" ")
+        print("\n".join(speak_help))
+
+    def shows_menu(self):
+        date_completer = self.generic_commands_append(self.pick.db.all_show_dates)
+        completer = WordCompleter(date_completer, WORD=True)
+        prompt_text = HTML('<style color="#FFDC00">phishpicks > shows > </style>')
+        placeholder = HTML('<style color="#6A87A0">YYYY-MM-DD</style>')
+        user_input = self.session.prompt(prompt_text, placeholder=placeholder, completer=completer,
+                                         complete_while_typing=True, key_bindings=self.kb)
+        if not user_input:
+            print(self.pick.picks)
+        elif user_input == 'random':
+            self.pick.random_shows()
+        elif user_input == 'play':
+            self.pick.play()
+        elif user_input == 'clear':
+            self.pick.clear()
+        elif user_input == 'exit':
+            raise KeyboardInterrupt
+        else:
+            selected_show, _ = self.extract_date(user_input)
+            if not selected_show:
+                print("Incomplete Date, Try Again")
+            else:
+                self.pick.pick_show(user_input.strip())
+
+    def tracks_menu(self):
+        date_completer = self.pick.db.all_show_dates()
+        completer = DateTrackCompleter(date_completer, self.pick.db.tracks_from_date)
+        prompt_text = HTML('<style color="#FFDC00">phishpicks > tracks > </style>')
+        placeholder = HTML('<style color="#6A87A0">YYYY-MM-DD TRACK_NAME</style>')
+        user_input = self.session.prompt(prompt_text, placeholder=placeholder, completer=completer,
+                                         complete_while_typing=True, key_bindings=self.kb)
+        if not user_input:
+            print(self.pick.picks)
+        elif user_input == 'random':
+            self.pick.random_tracks()
+        elif user_input == 'play':
+            self.pick.play()
+        elif user_input == 'clear':
+            self.pick.clear()
+        elif user_input == 'exit':
+            raise KeyboardInterrupt
+        else:
+            show_date, track_name = self.extract_date(user_input)
+            if not show_date or not track_name:
+                print("Missing Values, Try Again")
+            else:
+                self.pick.pick_track(show_date, track_name)
+
+    def main_menu(self):
+        menus = ['help', 'shows', 'tracks', 'random', 'play', 'clear', 'exit']
+        completer = WordCompleter(menus)
+        prompt_text = HTML('<style color="#FFDC00">phishpicks > </style>')
+        input = self.session.prompt(prompt_text,
+                                    completer=completer,
+                                    placeholder='',
+                                    complete_while_typing=True,
+                                    key_bindings=self.kb,
+                                    )
+        if input in menus:
+            self.menu = input.strip()
+        else:
+            print(self.pick.picks)
+
+    def generic_commands_run(self, user_input: str) -> str:
+        if not user_input:
+            print(self.pick.picks)
+        elif user_input == 'random':
+            self.pick.random_shows()
+        elif user_input == 'play':
+            self.pick.play()
+        elif user_input == 'clear':
+            self.pick.clear()
+        else:
+            return user_input
+
+    @staticmethod
+    def generic_commands_append(completer_func: Callable) -> list:
+        completion_list = completer_func()
+        commands = ['random', 'play', 'clear', ]
+        completion_list.extend(commands)
+        return completion_list
+
+    @staticmethod
+    def extract_date(select_statement):
+        """ Extracts the date from the selection statement """
+        # Regular expression to match a date in format YYYY-MM-DD
+        date_regex = r'\d{4}-\d{2}-\d{2}'
+        date_match = re.search(date_regex, select_statement)
+
+        # If a date is found, return it and everything else
+        if date_match:
+            date_str = date_match.group(0)
+            date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+            date = date_obj.strftime('%Y-%m-%d')
+
+            rest = select_statement.replace(date_str, '').strip()
+            return date, rest
+        else:
+            return None, select_statement
+
+    def start(self):
+        while True:
+            try:
+                if self._menu == 'main':
+                    self.main_menu()
+                elif self._menu == 'shows':
+                    try:
+                        self.shows_menu()
+                    except KeyboardInterrupt:
+                        self.menu = 'main'
+                elif self._menu == 'tracks':
+                    try:
+                        self.tracks_menu()
+                    except KeyboardInterrupt:
+                        self.menu = 'main'
+                elif self._menu == 'help':
+                    self.help_menu()
+                    self.menu = 'main'
+                elif self._menu == 'random':
+                    if self.pick.picks:
+                        if self.pick.mode == 'shows':
+                            self.pick.random_shows()
+                            self.menu = 'shows'
+                        elif self.pick.mode == 'tracks':
+                            self.pick.random_tracks()
+                            self.menu = 'tracks'
+                        else:
+                            print('Cannot')
+                    else:
+                        # No picks whatsoever
+                        self.pick.random_shows()
+                        self.menu = 'shows'
+                elif self._menu == 'exit':
+                    print("Goodbye")  # @TODO: Witty Exit
+                    raise KeyboardInterrupt
+            except KeyboardInterrupt:
+                print("Goodbye")
+                break
+
+
+# c = PhishREPL.load()
+# c.start()
