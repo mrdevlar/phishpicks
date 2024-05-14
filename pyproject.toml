@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "phishpicks"
-version = "0.5.0"
+version = "0.6.0"
 description = "Tooling for playing and copying Phish albums"
 authors = ["Richard Podkolinski <devlar@gmail.com>"]
 license = "GPL v3"
@@ -24,4 +24,4 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.plugins] # Optional super table
 
 [tool.poetry.plugins."console_scripts"]
-"phishpicks" = "phishpicks.command:main"
+"phishpicks" = "phishpicks.repl:start"
