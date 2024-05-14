@@ -217,25 +217,28 @@ class PhishData(BaseModel):
                     track_length_sec = int(audio.info.length)
                     track_name = self.clean_names(audio.get('title')[0])
                     track_number = audio.get('tracknumber')[0]
+                    track_number = self.k_out_of_n_fix(track_number) if isinstance(track_number, str) and "/" in track_number else track_number
                     disc_number = audio.get('discnumber')
                     disc_number = disc_number[0] if disc_number else disc_default
-                    # print(file)
+                    disc_number = self.k_out_of_n_fix(disc_number) if isinstance(disc_number, str) and "/" in disc_number else disc_number
                 elif file.suffix.lower() in ['.mp3']:
                     audio = MP3(file)
                     track_length_sec = int(audio.info.length)
                     track_name = self.clean_names(audio.tags['TIT2'][0])
                     track_number = audio.tags['TRCK'][0]
+                    track_number = self.k_out_of_n_fix(track_number) if isinstance(track_number, str) and "/" in track_number else track_number
                     disc_number = audio.get('TPOS')
                     disc_number = disc_number[0] if disc_number else disc_default
-                    # print(file)
+                    disc_number = self.k_out_of_n_fix(disc_number) if isinstance(disc_number, str) and "/" in disc_number else disc_number
                 elif file.suffix.lower() in ['.m4a']:
                     audio = MP4(file)
                     track_length_sec = int(audio.info.length)
                     track_name = self.clean_names(audio.tags['©nam'][0])
                     track_number = audio.tags['trkn'][0][0]
+                    track_number = self.k_out_of_n_fix(track_number) if isinstance(track_number, str) and "/" in track_number else track_number
                     disc_number = audio.get('disk')
                     disc_number = disc_number[0][0] if disc_number else disc_default
-                    # print(file)
+                    disc_number = self.k_out_of_n_fix(disc_number) if isinstance(disc_number, str) and "/" in disc_number else disc_number
                 else:
                     print(f"Unsupported File: {file}")
                     unsupported.append(str(file))
@@ -256,6 +259,15 @@ class PhishData(BaseModel):
 
         # Close session
         session.close()
+
+    @staticmethod
+    def k_out_of_n_fix(k_of_n: str):
+        """ Splits out K/N such as 01/06 """
+        split = k_of_n.split("/")
+        if len(split) != 2:
+            raise ValueError("Too many /")
+        k, _ = split
+        return k
 
     def drop_all(self):
         with self.engine.connect() as connection:
@@ -488,7 +500,6 @@ class PhishData(BaseModel):
             results = connection.execute(query)
             results = [(Show.from_db(row[:6]), Track.from_db(row[6:])) for row in results]
             return results
-
 
 # Not configured Path
 # conf = Configuration()
