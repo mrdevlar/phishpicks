@@ -76,8 +76,7 @@ def generate_fake_phish_folder(tempdir):
          "tracks": ['Heavy Things', 'If I Could', 'Tube', "Wolfman'S Brother", 'You Enjoy Myself'],
          "extension": "mp3"},
     ]
-    for fake in fake_shows:
-        yield fake
+    return fake_shows
 
 
 @pytest.fixture(scope="session", autouse=True)

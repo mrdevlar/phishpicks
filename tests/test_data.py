@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from datetime import date
 from phishpicks import Configuration
@@ -48,6 +49,25 @@ def test_reset_played_shows(settings):
     db.engine.dispose()
 
 
+def test_all_show_dates(settings):
+    config, db = load_or_create(settings)
+    assert config.is_db()
+    show_dates = db.all_show_dates()
+    folder_dates = [fake['album'][:10] for fake in settings['fake']]
+    for x, y in zip(show_dates, folder_dates):
+        assert x == y
+    db.engine.dispose()
+
+
+def test_all_track_names(settings):
+    config, db = load_or_create(settings)
+    assert config.is_db()
+    track_names = db.all_track_names()
+    flat_list = [item.lower() for sublist in settings['fake'] for item in sublist['tracks']]
+    assert set(track_names) == set(flat_list)
+    db.engine.dispose()
+
+
 def test_update_special(settings):
     config, db = load_or_create(settings)
     assert config.is_db()
@@ -84,4 +104,42 @@ def test_show_by_date(settings):
                 'folder_path': "2024-03-07 Center of No Man's Land"}
     for k, v in expected.items():
         assert show_vars[k] == v
+    db.engine.dispose()
+
+
+def test_tracks_by_name(settings):
+    config, db = load_or_create(settings)
+    assert config.is_db()
+    tracks = db.tracks_by_name('Ghost')
+    assert len(tracks) == 2
+    for t in tracks:
+        assert 'ghost' in t.name
+        assert isinstance(t, Track)
+    db.engine.dispose()
+
+
+def test_track_by_date_name(settings):
+    config, db = load_or_create(settings)
+    assert config.is_db()
+    show, track = db.track_by_date_name('2024-03-07', 'Didn')
+    expected_show = {'show_id': 3,
+                     'date': date(2024, 3, 7),
+                     'venue': "center of no man's land",
+                     'last_played': None,
+                     'times_played': 0,
+                     'folder_path': "2024-03-07 Center of No Man's Land"}
+    expected_track = {'track_id': 12,
+                      'show_id': 3,
+                      'disc_number': 3,
+                      'track_number': 2,
+                      'name': "i didn't know",
+                      'filetype': '.m4a',
+                      'length_sec': 1,
+                      'special': False, }
+    show_vars = vars(show)
+    track_vars = vars(track)
+    for k, v in expected_show.items():
+        assert show_vars[k] == v
+    for k, v in expected_track.items():
+        assert track_vars[k] == v
     db.engine.dispose()
