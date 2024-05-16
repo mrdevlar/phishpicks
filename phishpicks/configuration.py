@@ -120,4 +120,4 @@ class Configuration(BaseModel):
         if not self.configured['is_configuration_file']:
             self.save_to_json()
         if not self.configured['is_db']:
-            self.create_configure_db()
+            return self.create_configure_db()
