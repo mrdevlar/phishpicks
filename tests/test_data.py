@@ -2,6 +2,7 @@ from pathlib import Path
 from datetime import date
 from phishpicks import Configuration
 from phishpicks import PhishData
+from phishpicks.data import Show, Track
 
 
 def load_or_create(settings):
@@ -64,8 +65,23 @@ def test_update_special(settings):
                 'filetype': '.flac',
                 'length_sec': 2,
                 'special': True}
-    print(result_vars)
-    print(expected)
     for k, v in expected.items():
         assert result_vars[k] == v
+    db.engine.dispose()
+
+
+def test_show_by_date(settings):
+    config, db = load_or_create(settings)
+    assert config.is_db()
+    show = db.show_by_date('2024-03-07')
+    assert isinstance(show, Show)
+    show_vars = vars(show)
+    expected = {'show_id': 3,
+                'date': date(2024, 3, 7),
+                'venue': "center of no man's land",
+                'last_played': None,
+                'times_played': 0,
+                'folder_path': "2024-03-07 Center of No Man's Land"}
+    for k, v in expected.items():
+        assert show_vars[k] == v
     db.engine.dispose()
