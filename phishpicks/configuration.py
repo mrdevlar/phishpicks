@@ -35,7 +35,8 @@ class Configuration(BaseModel):
 
     @staticmethod
     def from_json(config_file: str = "phishpicks.json",
-                  config_folder: str = str(Path(os.path.expanduser("~/.phishpicks")))) -> Configuration:
+                  config_folder: str = str(Path(os.path.expanduser("~/.phishpicks"))),
+                  **kwargs) -> Configuration:
         configuration_file = config_folder / Path(config_file)
         with open(configuration_file, 'r') as file:
             data = json.load(file)
