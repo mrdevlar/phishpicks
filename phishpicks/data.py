@@ -396,6 +396,8 @@ class PhishData(BaseModel):
             results = [Track.from_db(row) for row in results]
             if len(results) > 1:
                 raise IndexError('Multiple Shows Found')
+            elif not results:
+                raise ValueError('No Show Found')
             return results[0]
 
     def track_by_date_name(self, show_date: str, track_name: str, exact: bool = False) -> tuple[Show, Track]:
@@ -447,6 +449,8 @@ class PhishData(BaseModel):
             results = [Show.from_db(row) for row in results]
             if len(results) > 1:
                 raise IndexError('Multiple Shows Found')
+            elif not results:
+                raise ValueError('No Show Found')
             return results[0]
 
     def show_by_date(self, show_date: str):
@@ -460,6 +464,8 @@ class PhishData(BaseModel):
             results = [Show.from_db(row) for row in results]
             if len(results) > 1:
                 raise IndexError('Multiple Shows Found')
+            elif not results:
+                raise ValueError('No Show Found')
             return results[0]
 
     def shows_from_tracks(self, tracks: list[Track]) -> list[Show]:
