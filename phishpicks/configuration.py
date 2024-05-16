@@ -94,6 +94,8 @@ class Configuration(BaseModel):
         db = PhishData(config=self)
         db.create()
         db.populate()
+        db.engine.dispose()
+        return db
 
     def delete_configuration_folder(self):
         shutil.rmtree(self.config_folder)
