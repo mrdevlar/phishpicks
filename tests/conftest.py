@@ -84,6 +84,7 @@ def generate_fake_phish_folder(tempdir):
 def settings():
     with TemporaryDirectory() as tempdir:
         config_folder = Path(tempdir) / Path(".testpicks")
+        backup_folder = Path(tempdir) / Path(".testpicks_backups")
         phish_folder = Path(tempdir) / Path("PhishTest")
         phish_folder.mkdir(parents=True)
         media_player_path = Path(tempdir) / Path('winamp.exe')
@@ -106,10 +107,11 @@ def settings():
             'tempdir': tempdir,
             'config_file': "phishtestpicks.json",
             'config_folder': str(Path(config_folder)),
+            'backup_folder': str(Path(backup_folder)),
             'phish_folder': str(Path(phish_folder)),
             'phish_db': "phish.db",
-            'fake': generate_fake_phish_folder(tempdir),
             'show_glob': "[0-9]*",
             'venue_regex': r'\d\d\d\d-\d\d-\d\d (.*?.*)',
-            'media_player_path': str(Path(media_player_path))
+            'media_player_path': str(Path(media_player_path)),
+            'fake': generate_fake_phish_folder(tempdir),
         }
