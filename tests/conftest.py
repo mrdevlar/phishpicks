@@ -58,6 +58,28 @@ def make_m4a(track_dict: dict):
     audio.save(file_path)
 
 
+def generate_fake_phish_folder(tempdir):
+    fake_shows = [
+        {"album": "2024-01-01 Imaginary Venue You Keep Within Your Head",
+         "tracks": ['Ghost', 'Bouncing Around The Room', 'Harpua', 'Sand', 'We Are Come To Outlive Our Brains'],
+         "extension": "flac"},
+        {"album": "2024-01-02 Spaceship from Scent of a Mule",
+         "tracks": ['Gotta Jibboo', 'Simple', 'The Old Home Place', 'Twenty Years Later', 'Water In The Sky'],
+         "extension": "mp3"},
+        {"album": "2024-03-07 Center of No Man's Land",
+         "tracks": ['Dog Faced Boy', "I Didn'T Know", 'Mock Song', 'Suzy Greenberg', 'Undermind'],
+         "extension": "m4a"},
+        {"album": "2024-04-20 Drew Carey Presents The Sphere",
+         "tracks": ['Backwards Down The Number Line', 'Driver', 'Horn', 'Ruby Waves', 'Split Open And Melt'],
+         "extension": "flac"},
+        {"album": "2024-05-15 In the Tail of Hailey's Comet",
+         "tracks": ['Heavy Things', 'If I Could', 'Tube', "Wolfman'S Brother", 'You Enjoy Myself'],
+         "extension": "mp3"},
+    ]
+    for fake in fake_shows:
+        yield fake
+
+
 @pytest.fixture(scope="session", autouse=True)
 def settings():
     with TemporaryDirectory() as tempdir:
@@ -67,26 +89,26 @@ def settings():
         media_player_path = Path(tempdir) / Path('winamp.exe')
         media_player_path.touch()
         # @TODO: Replace with arbitrary folder generator
-        album1 = "2024-01-01 Imaginary Venue You Keep Within Your Head"
-        album2 = "2024-01-02 Spaceship from Scent of a Mule"
-        album3 = "2024-03-07 Center of No Man's Land"
-        album4 = "2024-04-20 Drew Carey Presents The Sphere"
-        album5 = "2024-05-15 In the Tail of Hailey's Comet"
-        show = phish_folder / Path(album1)
-        show.mkdir(parents=True)
-        make_flac(track_dict(show, "Ghost", album1, "1", "0", "Phish"))
-        make_mp3(track_dict(show, "Everything's Right", album1, "2", "0", "Phish"))
-        show2 = phish_folder / Path(album2)
-        show2.mkdir(parents=True)
-        make_m4a(track_dict(show2, "Sand", album2, "3", "1", "Phish"))
-        # Return a dict
+        for fake in generate_fake_phish_folder(tempdir):
+            show = phish_folder / Path(fake['album'])
+            show.mkdir(parents=True, exist_ok=True)
+            for idx, track in enumerate(fake['tracks']):
+                idx = idx + 1
+                if fake['extension'] == 'flac':
+                    make_flac(track_dict(show, track, fake['album'], str(idx), "1/3", "Phish"))
+                elif fake['extension'] == 'mp3':
+                    make_mp3(track_dict(show, track, fake['album'], str(idx), "2/3", "Phish"))
+                elif fake['extension'] == 'm4a':
+                    make_m4a(track_dict(show, track, fake['album'], str(idx), "3/3", "Phish"))
+                else:
+                    raise ValueError("No Extension Available")
         yield {
             'tempdir': tempdir,
             'config_file': "phishtestpicks.json",
             'config_folder': str(Path(config_folder)),
             'phish_folder': str(Path(phish_folder)),
-            'shows': [show, show2],
             'phish_db': "phish.db",
+            'fake': generate_fake_phish_folder(tempdir),
             'show_glob': "[0-9]*",
             'venue_regex': r'\d\d\d\d-\d\d-\d\d (.*?.*)',
             'media_player_path': str(Path(media_player_path))

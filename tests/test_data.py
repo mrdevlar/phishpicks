@@ -17,7 +17,7 @@ def test_configuration(settings):
     config.save_to_json()
     assert config.is_configuration_folder()
     assert config.is_phish_folder()
-    assert config.total_phish_folders() == 2
+    assert config.total_phish_folders() == 5
     assert (Path(config.config_folder) / config.config_file).exists()
 
 
@@ -58,13 +58,18 @@ def test_db_update_special(settings):
     assert len(results) == 1
     result = results[0]
     result_vars = vars(result)
+
     expected = {'track_id': 1,
                 'show_id': 1,
-                'disc_number': 0,
+                'disc_number': 1,
                 'track_number': 1,
                 'name': 'ghost',
                 'filetype': '.flac',
                 'length_sec': 2,
                 'special': True}
-    assert all([(result_vars[k] == v) for (k, v) in expected.items()])
+    print(result_vars)
+    print(expected)
+    for k, v in expected.items():
+        assert result_vars[k] == v
+    # assert all([(result_vars[k] == v) for (k, v) in expected.items()])
     pd.engine.dispose()
