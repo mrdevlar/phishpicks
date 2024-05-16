@@ -67,7 +67,7 @@ def generate_fake_phish_folder(tempdir):
          "tracks": ['Gotta Jibboo', 'Simple', 'The Old Home Place', 'Twenty Years Later', 'Water In The Sky'],
          "extension": "mp3"},
         {"album": "2024-03-07 Center of No Man's Land",
-         "tracks": ['Dog Faced Boy', "I Didn'T Know", 'Mock Song', 'Suzy Greenberg', 'Undermind'],
+         "tracks": ['Ghost', "I Didn'T Know", 'Mock Song', 'Suzy Greenberg', 'Undermind'],
          "extension": "m4a"},
         {"album": "2024-04-20 Drew Carey Presents The Sphere",
          "tracks": ['Backwards Down The Number Line', 'Driver', 'Horn', 'Ruby Waves', 'Split Open And Melt'],
