@@ -9,10 +9,10 @@ from phishpicks import Configuration
 from phishpicks import PhishData
 
 
-class PhishList(list):
+class PhishSelection(list):
     """ Special list for holding picks """
     def __init__(self, *args):
-        super(PhishList, self).__init__(*args)
+        super(PhishSelection, self).__init__(*args)
         self._map = set()
 
     def __repr__(self):
@@ -21,7 +21,7 @@ class PhishList(list):
     def extend(self, new_elements):
         new_elements = [element for element in new_elements if element not in self._map]
         self._map.update(new_elements)
-        super(PhishList, self).extend(new_elements)
+        super(PhishSelection, self).extend(new_elements)
         self.sort()
         print("\n".join([repr(x) for x in self]))
 
@@ -30,19 +30,19 @@ class PhishList(list):
             print("\n".join([repr(x) for x in self]))
         else:
             self._map.add(new_element)
-            super(PhishList, self).append(new_element)
+            super(PhishSelection, self).append(new_element)
             self.sort()
             print("\n".join([repr(x) for x in self]))
 
     def clear(self):
-        super(PhishList, self).clear()
+        super(PhishSelection, self).clear()
         self._map.clear()
 
 
 class PhishPicks(BaseModel):
     db: PhishData
     config: Configuration
-    _picks: PhishList = None
+    _picks: PhishSelection = None
     _mode: str = None
 
     @property
@@ -67,7 +67,7 @@ class PhishPicks(BaseModel):
         self._picks = value
 
     def model_post_init(self, __context: Any) -> None:
-        self.picks = PhishList()
+        self.picks = PhishSelection()
 
     def __repr__(self):
         """ Shows Summary of Phish Picks"""

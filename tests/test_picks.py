@@ -1,7 +1,7 @@
 from phishpicks import PhishPicks
 from phishpicks import Configuration
 from phishpicks import PhishData
-from phishpicks.picks import PhishList
+from phishpicks.picks import PhishSelection
 from phishpicks import Show, Track
 
 
@@ -22,7 +22,7 @@ def test_picks_load(settings):
     assert isinstance(pp, PhishPicks)
     assert isinstance(pp.db, PhishData)
     assert isinstance(pp.config, Configuration)
-    assert isinstance(pp.picks, PhishList)
+    assert isinstance(pp.picks, PhishSelection)
     assert pp.config.is_configured()
     pp.db.engine.dispose()
 
