@@ -13,6 +13,7 @@ from prompt_toolkit.keys import Keys
 from prompt_toolkit.key_binding import KeyBindings, KeyPress
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.styles import Style
+from prompt_toolkit import prompt
 
 
 class DateTrackCompleter(Completer):
@@ -89,7 +90,6 @@ class PhishREPL(BaseModel):
     def model_post_init(self, __context: Any):
         self.kb = KeyBindings()
         self.keys = []
-        self.session = PromptSession()
 
         # @TODO: Add ctrl backspace
         # @TODO: Add ctrl arrows
@@ -229,6 +229,7 @@ class PhishREPL(BaseModel):
             return None, select_statement
 
     def start(self):
+        self.session = PromptSession()
         while True:
             try:
                 if self._menu == 'main':
@@ -268,5 +269,6 @@ class PhishREPL(BaseModel):
                 break
 
 
-# c = PhishREPL.load()
-# c.start()
+def main():
+    c = PhishREPL.load()
+    c.start()
