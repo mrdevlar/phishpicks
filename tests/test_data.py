@@ -2,8 +2,7 @@ import re
 from pathlib import Path
 from datetime import date
 from phishpicks import Configuration
-from phishpicks import PhishData
-from phishpicks.data import Show, Track
+from phishpicks import PhishData, Show, Track
 
 
 def load_or_create(settings):

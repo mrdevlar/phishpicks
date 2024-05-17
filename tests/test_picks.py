@@ -2,7 +2,7 @@ from phishpicks import PhishPicks
 from phishpicks import Configuration
 from phishpicks import PhishData
 from phishpicks.picks import PhishList
-from phishpicks.data import Show, Track
+from phishpicks import Show, Track
 
 
 def pp_load(settings):
