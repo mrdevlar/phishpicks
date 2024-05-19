@@ -21,21 +21,21 @@ def test_date_completer(settings):
     """ Test Date Completer, currently Generic WordCompleter """
     rp = repl_load(settings)
     date_completer = rp.pick.db.all_show_dates()
-    doc_text = '2024-03'
+    doc_text = '2017-03'
     doc = Document(doc_text, len(doc_text))
     event = CompleteEvent()
     completer = WordCompleter(date_completer, ignore_case=True, WORD=True)
     completions = [c.text for c in completer.get_completions(doc, event)]
     assert len(completions) == 1
-    assert '2024-03-07' in completions
+    assert '2017-03-07' in completions
     rp.pick.db.engine.dispose()
 
 
 def test_track_after_date_completer(settings):
     rp = repl_load(settings)
-    tracks_from_date = rp.pick.db.tracks_from_date('2024-03-07')
+    tracks_from_date = rp.pick.db.tracks_from_date('2017-03-07')
     track_names = [track.name for track in tracks_from_date]
-    doc_text = '2024-03-07 G'
+    doc_text = '2017-03-07 G'
     doc = Document(doc_text, len(doc_text))
     event = CompleteEvent()
     completer = TrackAfterDateCompleter(track_names)
@@ -47,9 +47,9 @@ def test_track_after_date_completer(settings):
 
 def test_tracks_after_date_completer(settings):
     rp = repl_load(settings)
-    tracks_from_date = rp.pick.db.tracks_from_date('2024-03-07')
+    tracks_from_date = rp.pick.db.tracks_from_date('2017-03-07')
     track_names = [track.name for track in tracks_from_date]
-    doc_text = '2024-03-07'
+    doc_text = '2017-03-07'
     doc = Document(doc_text, len(doc_text))
     event = CompleteEvent()
     completer = TrackAfterDateCompleter(track_names)
@@ -65,13 +65,13 @@ def test_date_track_completer_date(settings):
     rp = repl_load(settings)
     date_completer = rp.pick.db.all_show_dates()
     tracks_from_date = rp.pick.db.tracks_from_date
-    doc_text = '2024-03'
+    doc_text = '2017-03'
     doc = Document(doc_text, len(doc_text))
     event = CompleteEvent()
     completer = DateTrackCompleter(date_completer, tracks_from_date)
     completions = [c.text for c in completer.get_completions(doc, event)]
     assert len(completions) == 1
-    assert '2024-03-07' in completions
+    assert '2017-03-07' in completions
     rp.pick.db.engine.dispose()
 
 
@@ -79,7 +79,7 @@ def test_date_track_completer_track(settings):
     rp = repl_load(settings)
     date_completer = rp.pick.db.all_show_dates()
     tracks_from_date = rp.pick.db.tracks_from_date
-    doc_text = '2024-03-07 G'
+    doc_text = '2017-03-07 G'
     doc = Document(doc_text, len(doc_text))
     event = CompleteEvent()
     completer = DateTrackCompleter(date_completer, tracks_from_date)

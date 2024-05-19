@@ -1,6 +1,9 @@
 import re
 from pathlib import Path
 from datetime import date
+
+import pytest
+
 from phishpicks import Configuration
 from phishpicks import PhishData, Show, Track
 
@@ -52,7 +55,7 @@ def test_all_show_dates(settings):
     config, db = load_or_create(settings)
     assert config.is_db()
     show_dates = db.all_show_dates()
-    folder_dates = [fake['album'][:10] for fake in settings['fake']]
+    folder_dates = sorted([fake['album'][:10] for fake in settings['fake']])
     for x, y in zip(show_dates, folder_dates):
         assert x == y
     db.engine.dispose()
@@ -78,11 +81,11 @@ def test_update_special(settings):
     result_vars = vars(result)
     expected = {'track_id': 1,
                 'show_id': 1,
-                'disc_number': 1,
+                'disc_number': 3,
                 'track_number': 1,
                 'name': 'ghost',
-                'filetype': '.flac',
-                'length_sec': 2,
+                'filetype': '.m4a',
+                'length_sec': 1,
                 'special': True}
     for k, v in expected.items():
         assert result_vars[k] == v
@@ -92,15 +95,17 @@ def test_update_special(settings):
 def test_show_by_date(settings):
     config, db = load_or_create(settings)
     assert config.is_db()
-    show = db.show_by_date('2024-03-07')
+    with pytest.raises(ValueError):
+        show = db.show_by_date('2024-03-07')
+    show = db.show_by_date('2017-03-07')
     assert isinstance(show, Show)
     show_vars = vars(show)
-    expected = {'show_id': 3,
-                'date': date(2024, 3, 7),
+    expected = {'show_id': 1,
+                'date': date(2017, 3, 7),
                 'venue': "center of no man's land",
                 'last_played': None,
                 'times_played': 0,
-                'folder_path': "2024-03-07 Center of No Man's Land"}
+                'folder_path': "2017-03-07 Center of No Man's Land"}
     for k, v in expected.items():
         assert show_vars[k] == v
     db.engine.dispose()
@@ -120,15 +125,15 @@ def test_tracks_by_name(settings):
 def test_track_by_date_name(settings):
     config, db = load_or_create(settings)
     assert config.is_db()
-    show, track = db.track_by_date_name('2024-03-07', 'Didn')
-    expected_show = {'show_id': 3,
-                     'date': date(2024, 3, 7),
+    show, track = db.track_by_date_name('2017-03-07', 'Didn')
+    expected_show = {'show_id': 1,
+                     'date': date(2017, 3, 7),
                      'venue': "center of no man's land",
                      'last_played': None,
                      'times_played': 0,
-                     'folder_path': "2024-03-07 Center of No Man's Land"}
-    expected_track = {'track_id': 12,
-                      'show_id': 3,
+                     'folder_path': "2017-03-07 Center of No Man's Land"}
+    expected_track = {'track_id': 2,
+                      'show_id': 1,
                       'disc_number': 3,
                       'track_number': 2,
                       'name': "i didn't know",
