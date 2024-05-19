@@ -217,28 +217,34 @@ class PhishData(BaseModel):
                     track_length_sec = int(audio.info.length)
                     track_name = self.clean_names(audio.get('title')[0])
                     track_number = audio.get('tracknumber')[0]
-                    track_number = self.k_out_of_n_fix(track_number) if isinstance(track_number, str) and "/" in track_number else track_number
+                    track_number = self.k_out_of_n_fix(track_number) if isinstance(track_number,
+                                                                                   str) and "/" in track_number else track_number
                     disc_number = audio.get('discnumber')
                     disc_number = disc_number[0] if disc_number else disc_default
-                    disc_number = self.k_out_of_n_fix(disc_number) if isinstance(disc_number, str) and "/" in disc_number else disc_number
+                    disc_number = self.k_out_of_n_fix(disc_number) if isinstance(disc_number,
+                                                                                 str) and "/" in disc_number else disc_number
                 elif file.suffix.lower() in ['.mp3']:
                     audio = MP3(file)
                     track_length_sec = int(audio.info.length)
                     track_name = self.clean_names(audio.tags['TIT2'][0])
                     track_number = audio.tags['TRCK'][0]
-                    track_number = self.k_out_of_n_fix(track_number) if isinstance(track_number, str) and "/" in track_number else track_number
+                    track_number = self.k_out_of_n_fix(track_number) if isinstance(track_number,
+                                                                                   str) and "/" in track_number else track_number
                     disc_number = audio.get('TPOS')
                     disc_number = disc_number[0] if disc_number else disc_default
-                    disc_number = self.k_out_of_n_fix(disc_number) if isinstance(disc_number, str) and "/" in disc_number else disc_number
+                    disc_number = self.k_out_of_n_fix(disc_number) if isinstance(disc_number,
+                                                                                 str) and "/" in disc_number else disc_number
                 elif file.suffix.lower() in ['.m4a']:
                     audio = MP4(file)
                     track_length_sec = int(audio.info.length)
                     track_name = self.clean_names(audio.tags['©nam'][0])
                     track_number = audio.tags['trkn'][0][0]
-                    track_number = self.k_out_of_n_fix(track_number) if isinstance(track_number, str) and "/" in track_number else track_number
+                    track_number = self.k_out_of_n_fix(track_number) if isinstance(track_number,
+                                                                                   str) and "/" in track_number else track_number
                     disc_number = audio.get('disk')
                     disc_number = disc_number[0][0] if disc_number else disc_default
-                    disc_number = self.k_out_of_n_fix(disc_number) if isinstance(disc_number, str) and "/" in disc_number else disc_number
+                    disc_number = self.k_out_of_n_fix(disc_number) if isinstance(disc_number,
+                                                                                 str) and "/" in disc_number else disc_number
                 else:
                     print(f"Unsupported File: {file}")
                     unsupported.append(str(file))
@@ -334,6 +340,25 @@ class PhishData(BaseModel):
             result = connection.execute(query)
             total_shows = list(result)[0][0]
             return total_shows
+
+    def random_shows(self, k: int = 1, exclude_played: bool = False, exclude_show_ids: list = None):
+        if exclude_show_ids is None:
+            exclude_show_ids = []
+        with (self.engine.connect() as connection):
+            query = select(self.shows)
+            if exclude_show_ids:
+                query = query.where(~self.shows.c.show_id.in_(exclude_show_ids))
+            if exclude_played:
+                query = query.where(self.shows.c.times_played == 0)
+            query = query.order_by(func.random()).limit(k)
+            results = connection.execute(query)
+            return [Show.from_db(row) for row in results]
+
+    def random_tracks(self, k: int = 1):
+        with self.engine.connect() as connection:
+            query = select(self.tracks).order_by(func.random()).limit(k)
+            results = connection.execute(query)
+            return [Track.from_db(row) for row in results]
 
     def all_shows(self) -> list[Show]:
         """ Returns a list of all shows """

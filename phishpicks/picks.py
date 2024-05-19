@@ -105,8 +105,7 @@ class PhishPicks(BaseModel):
             k: the number of shows to randomly select
         """
         self.mode = 'shows'
-        all_shows = self.db.all_shows()
-        selected_shows = random.choices(all_shows, k=k)
+        selected_shows = self.db.random_shows(k=k)
         self.picks.extend(selected_shows)
 
     def random_tracks(self, k: int = 1):
@@ -116,8 +115,7 @@ class PhishPicks(BaseModel):
             k: the number of tracks to randomly select
         """
         self.mode = 'tracks'
-        all_tracks = self.db.all_tracks()
-        selected_tracks = random.choices(all_tracks, k=k)
+        selected_tracks = self.db.random_tracks(k=k)
         self.picks.extend(selected_tracks)
 
     def all_shows(self):
