@@ -1,4 +1,5 @@
 from __future__ import annotations
+import re
 import random
 import subprocess
 import shlex
@@ -10,7 +11,7 @@ from phishpicks import PhishData
 
 
 class PhishSelection(list):
-    """ Special list for holding picks """
+    """ Special list for holding picks, these can be shows or tracks """
     def __init__(self, *args):
         super(PhishSelection, self).__init__(*args)
         self._map = set()
@@ -33,6 +34,26 @@ class PhishSelection(list):
             super(PhishSelection, self).append(new_element)
             self.sort()
             print("\n".join([repr(x) for x in self]))
+
+    def subselect(self, match: str, mode: str):
+        if len(self) == 0:
+            raise ValueError('Nothing is picked')
+        if mode not in ['shows', 'tracks']:
+            raise TypeError("mode must be one of {'shows', 'tracks'}")
+        selected_list = []
+        for pick in self:
+            pick_data = pick.folder_path if mode == 'shows' else pick.file_path
+            if re.search(match, pick_data, re.IGNORECASE):
+                selected_list.append(pick)
+        return selected_list
+
+    def delete(self, match: str, mode: str, verbose: bool = True):
+        selection = self.subselect(match=match, mode=mode)
+        if verbose:
+            print("Deleting...")
+            print("\n".join([repr(x) for x in selection]))
+        for sel in selection:
+            self.remove(sel)
 
     def clear(self):
         super(PhishSelection, self).clear()
