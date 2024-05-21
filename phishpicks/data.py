@@ -361,6 +361,12 @@ class PhishData(BaseModel):
             else:
                 raise ValueError('Nothing Deleted')
 
+    def check_duplicates_dates(self):
+        with self.engine.connect() as connection:
+            query = select(self.shows.c.date).group_by(self.shows.c.date).having(func.count(self.shows.c.date) > 1)
+            result = connection.execute(query)
+            return [show.date.strftime('%Y-%m-%d') for show in result]
+
     def total_shows(self) -> int:
         """ Returns a count of the total number of shows """
         with self.engine.connect() as connection:
