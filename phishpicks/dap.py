@@ -1,5 +1,4 @@
 # Digital Audio Player Controls
-import os
 import re
 import shutil
 from pathlib import Path
@@ -20,9 +19,9 @@ class PhishDAP(BaseModel):
 
     def shows_on_dap(self):
         shows = []
-        for folder in Path(self.dap_path).glob(pp.config.show_glob):
+        for folder in Path(self.dap_path).glob(self.pp.config.show_glob):
             show_date = re.findall(self.date_re, folder.name)[0]
-            show = pp.db.show_by_date(show_date)
+            show = self.pp.db.show_by_date(show_date)
             shows.append(show)
         self.on_dap.extend(shows)
 
@@ -56,6 +55,6 @@ class PhishDAP(BaseModel):
                 print(f"Show {dap_show} has been successfully deleted.")
 
 
-# pp = PhishPicks.load()
-# dp = PhishDAP(pp=pp)
-# print(dp)
+pp = PhishPicks.load()
+dp = PhishDAP(pp=pp)
+print(dp)
