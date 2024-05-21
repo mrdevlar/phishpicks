@@ -1,4 +1,3 @@
-import re
 from pathlib import Path
 from datetime import date
 
@@ -96,7 +95,7 @@ def test_show_by_date(settings):
     config, db = load_or_create(settings)
     assert config.is_db()
     with pytest.raises(ValueError):
-        show = db.show_by_date('2024-03-07')
+        db.show_by_date('2024-03-07')
     show = db.show_by_date('2017-03-07')
     assert isinstance(show, Show)
     show_vars = vars(show)
