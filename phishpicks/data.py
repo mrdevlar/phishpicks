@@ -3,7 +3,7 @@ from datetime import date
 from pathlib import Path
 import re
 import json
-from typing import Any, Optional
+from typing import Any, Optional, List
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, Date, ForeignKey, Index, select, \
     inspect, Boolean, update, func, distinct
 from sqlalchemy.sql import text, delete
@@ -332,6 +332,34 @@ class PhishData(BaseModel):
             connection.execute(stmt)
             connection.commit()
         print(f"Special Add: {track}")
+
+    def delete_shows(self, where_clause: str, confirm: bool = True) -> list[int]:
+        """ Delete Shows Based on Arbitrary Where Clause"""
+        with self.engine.connect() as connection:
+            # First, select the shows based on the where_clause for retrieval.
+            selection_query = select(self.shows).where(text(where_clause))
+            matching_shows = connection.execute(selection_query)
+            shows_to_delete = [Show.from_db(row) for row in matching_shows]
+            if not shows_to_delete:
+                raise ValueError('No Shows Found')
+            to_delete = []
+            for show in shows_to_delete:
+                if confirm:
+                    response = input(f"Delete {show.__repr__()}? - [y/n]")
+                    if response.lower().strip() == 'n':
+                        print("Not Deleted")
+                        continue
+                    elif response.lower().strip() == 'y':
+                        to_delete.append(show.show_id)
+                    else:
+                        raise ValueError("response must be in {y,n}")
+            if to_delete:
+                deletion_query = delete(self.shows).where(self.shows.c.show_id.in_(to_delete))
+                connection.execute(deletion_query)
+                connection.commit()
+                return to_delete
+            else:
+                raise ValueError('Nothing Deleted')
 
     def total_shows(self) -> int:
         """ Returns a count of the total number of shows """
