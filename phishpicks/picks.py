@@ -119,14 +119,16 @@ class PhishPicks(BaseModel):
         """ Clears the contents of the picks """
         self.picks.clear()
 
-    def random_shows(self, k: int = 1):
+    def random_shows(self, k: int = 1, exclude_played: bool = False, exclude_show_ids: list = None):
         """
         Randomly adds k shows to picks
         Args:
             k: the number of shows to randomly select
+            exclude_played: exclude all times_played > 0
+            exclude_show_ids: exclude a list of show_ids
         """
         self.mode = 'shows'
-        selected_shows = self.db.random_shows(k=k)
+        selected_shows = self.db.random_shows(k=k, exclude_played=exclude_played, exclude_show_ids=exclude_show_ids)
         self.picks.extend(selected_shows)
 
     def random_tracks(self, k: int = 1):

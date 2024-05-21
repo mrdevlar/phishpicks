@@ -13,7 +13,23 @@ class PhishDAP(BaseModel):
     dap_path: str = str(Path('E:\\01_Phish'))
     date_re: str = r'\d\d\d\d-\d\d\-\d\d'
 
+    def __repr__(self):
+        selection = ""
+        if self.on_dap:
+            selection += f"_______ On Digital Audio Player _______\n"
+            selection += "\n".join([repr(x) for x in self.on_dap])
+        else:
+            selection += "Digital Audio Player is Empty!\n"
+        if self.pp.picks:
+            selection += f"\n_________ Phish Picks _________\n"
+            selection += "\n".join([repr(x) for x in self.pp.picks])
+        else:
+            selection += "No Picks Present"
+        return selection
+
     def model_post_init(self, __context: Any) -> None:
+        if not Path(self.dap_path).exists():
+            raise RuntimeError("Digital Audio Player Is Not Configured or Connected")
         self.on_dap = PhishSelection()
         self.shows_on_dap()
 
@@ -28,6 +44,13 @@ class PhishDAP(BaseModel):
     def select(self, match: str):
         mode = 'shows'
         return self.on_dap.subselect(match, mode)
+
+    def random_show(self, k: int = 1, exclude_played: bool = False):
+        if self.on_dap:
+            on_dap_show_ids = [show.show_id for show in self.on_dap]
+        else:
+            on_dap_show_ids = None
+        self.pp.random_shows(k=k, exclude_played=exclude_played, exclude_show_ids=on_dap_show_ids)
 
     def delete(self, match: str, confirm: bool = True):
         selection = self.select(match)
