@@ -27,8 +27,8 @@ class PhishDAP(BaseModel):
         self.on_dap.extend(shows)
 
     def select(self, match: str):
-        mode = self.pp.mode
-        return self.pp.picks.subselect(match, mode)
+        mode = 'shows'
+        return self.on_dap.subselect(match, mode)
 
     def delete(self, match: str, confirm: bool = True):
         selection = self.select(match)
@@ -39,11 +39,16 @@ class PhishDAP(BaseModel):
             try:
                 if confirm:
                     response = input(f"Delete {dap_show}? - [y/n]")
-                    if response.lower() == 'n':
-                        break
-                    elif response.lower() == 'y':
+                    if response.lower().strip() == 'n':
+                        print("Not Deleted")
+                        continue
+                    elif response.lower().strip() == 'y':
+                        self.on_dap.remove(sel)
                         shutil.rmtree(dap_show)
+                    else:
+                        raise ValueError("response must be in {y,n}")
                 else:
+                    self.on_dap.remove(sel)
                     shutil.rmtree(dap_show)
             except OSError as e:
                 print(f"Error Deleting Folder: {e}")
@@ -51,8 +56,6 @@ class PhishDAP(BaseModel):
                 print(f"Show {dap_show} has been successfully deleted.")
 
 
-
-
-pp = PhishPicks.load()
-dp = PhishDAP(pp=pp)
-print(dp)
+# pp = PhishPicks.load()
+# dp = PhishDAP(pp=pp)
+# print(dp)
