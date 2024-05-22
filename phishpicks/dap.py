@@ -12,6 +12,7 @@ class PhishDAP(BaseModel):
     on_dap: Any = None
     dap_path: str = str(Path('E:\\01_Phish'))  # @TODO: Replace with pp.config
     date_re: str = r'\d\d\d\d-\d\d\-\d\d'
+    free: int = 0
 
     def __repr__(self):
         selection = ""
@@ -32,6 +33,7 @@ class PhishDAP(BaseModel):
             raise RuntimeError(f"No Device at {self.dap_path}! Digital Audio Player Is Not Configured or Connected")
         self.on_dap = PhishSelection()
         self.shows_on_dap()
+        self.free_space()
 
     def shows_on_dap(self):
         self.on_dap.clear()
@@ -50,14 +52,17 @@ class PhishDAP(BaseModel):
         self.pp.random_shows(k=k, exclude_played=exclude_played, exclude_show_ids=on_dap_show_ids)
 
     def copy_to_dap(self):
-        # @TODO: Will it fit? If not, fail
-        for pick in self.pp.picks:
-            folder_src = str(Path(self.pp.config.phish_folder) / pick.folder_path)
-            folder_des = str(Path(self.dap_path) / pick.folder_path)
-            print(f"Copying to {folder_des}")
-            shutil.copytree(folder_src, folder_des, dirs_exist_ok=True)
-        self.pp.clear()
-        self.shows_on_dap()
+        if self.free > dp.pick_size():
+            for pick in self.pp.picks:
+                folder_src = str(Path(self.pp.config.phish_folder) / pick.folder_path)
+                folder_des = str(Path(self.dap_path) / pick.folder_path)
+                print(f"Copying to {folder_des}")
+                shutil.copytree(folder_src, folder_des, dirs_exist_ok=True)
+            self.pp.clear()
+            self.shows_on_dap()
+            self.free_space()
+        else:
+            raise OSError("Insufficient Disk Space")
 
     def select_on_dap(self, match: str):
         mode = 'shows'
@@ -94,10 +99,20 @@ class PhishDAP(BaseModel):
                 print(f"Show {dap_show} has been successfully deleted.")
         self.shows_on_dap()
 
+    def free_space(self):
+        _, _, self.free = shutil.disk_usage(self.dap_path)
 
-pp = PhishPicks.load()
-dp = PhishDAP(pp=pp)
-# dp.clear_dap()
-dp.pick_random_show(3)
-dp.copy_to_dap()
-print(dp)
+    def pick_size(self):
+        size = 0
+        for pick in self.pp.picks:
+            folder = Path(self.pp.config.phish_folder) / pick.folder_path
+            size += sum([file.stat().st_size for file in folder.glob('**/*')])
+        return size
+
+
+# pp = PhishPicks.load()
+# dp = PhishDAP(pp=pp)
+# # dp.clear_dap()
+# dp.pick_random_show(3)
+# dp.copy_to_dap()
+# print(dp)
