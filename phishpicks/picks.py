@@ -118,7 +118,7 @@ class PhishPicks(BaseModel):
         """ Clears the contents of the picks """
         self.picks.clear()
 
-    def random_shows(self, k: int = 1, exclude_played: bool = False, exclude_show_ids: list = None):
+    def random_shows(self, k: int = 1, exclude_played: bool = True, exclude_show_ids: list = None):
         """
         Randomly adds k shows to picks
         Args:
