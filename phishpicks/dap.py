@@ -52,17 +52,21 @@ class PhishDAP(BaseModel):
         self.pp.random_shows(k=k, exclude_played=exclude_played, exclude_show_ids=on_dap_show_ids)
 
     def copy_to_dap(self):
-        if self.free > dp.pick_size():
+        if self.free > self.pick_size():
             for pick in self.pp.picks:
                 folder_src = str(Path(self.pp.config.phish_folder) / pick.folder_path)
                 folder_des = str(Path(self.dap_path) / pick.folder_path)
                 print(f"Copying to {folder_des}")
                 shutil.copytree(folder_src, folder_des, dirs_exist_ok=True)
+                # self.pp.db.update_played_show(pick)
             self.pp.clear()
             self.shows_on_dap()
             self.free_space()
         else:
             raise OSError("Insufficient Disk Space")
+
+    def last_copied_to_dap(self, last_n: int = 1):
+        self.pp.last_played_shows(last_n=last_n)
 
     def select_on_dap(self, match: str):
         mode = 'shows'
@@ -115,4 +119,5 @@ class PhishDAP(BaseModel):
 # # dp.clear_dap()
 # dp.pick_random_show(3)
 # dp.copy_to_dap()
+# dp.last_copied_to_dap()
 # print(dp)
