@@ -1,6 +1,5 @@
 from __future__ import annotations
 import re
-import random
 import subprocess
 import shlex
 from pathlib import Path
@@ -147,6 +146,11 @@ class PhishPicks(BaseModel):
         all_shows = self.db.all_shows()
         self.picks.extend(all_shows)
 
+    def last_played_shows(self, last_n: int = 1):
+        self.mode = 'shows'
+        last_played = self.db.last_played_shows(last_n=last_n)
+        self.picks.extend(last_played)
+
     def pick_show(self, date: str):
         """
         Adds a selected show to picks
@@ -247,6 +251,15 @@ class PhishPicks(BaseModel):
         else:
             raise ValueError('Unknown mode')
 
+    def reset_last_played(self):
+        """ Returns last_played to None and times_played to 0 """
+        if self._mode == 'shows':
+            [self.db.reset_played_shows(track) for track in self._picks]
+        elif self._mode == 'tracks':
+            raise NotImplementedError("reset_last_played only available in 'shows' mode")
+        else:
+            raise ValueError('Unknown mode')
+
     def play(self, enqueue: bool = False, update: bool = True):
         """
         Plays the selected picks with your media player
@@ -274,9 +287,6 @@ class PhishPicks(BaseModel):
                                    stderr=subprocess.PIPE,
                                    stdin=subprocess.PIPE,
                                    shell=True)
-
-    def dap_copy(self):
-        raise NotImplementedError
 
 # def main():
 #     pp = PhishPicks.load()

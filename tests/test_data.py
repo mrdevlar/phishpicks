@@ -41,7 +41,9 @@ def test_update_played(settings):
 def test_reset_played_shows(settings):
     config, db = load_or_create(settings)
     assert config.is_db()
-    db.reset_played_shows()
+    selected_show = db.show_from_id(1)
+    db.update_played_show(selected_show)
+    db.reset_played_shows([selected_show])
     results = db.query_shows('shows.show_id == 1')
     assert len(results) == 1
     result = results[0]

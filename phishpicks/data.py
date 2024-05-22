@@ -318,12 +318,14 @@ class PhishData(BaseModel):
             connection.execute(stmt)
             connection.commit()
 
-    def reset_played_shows(self):
+    def reset_played_shows(self, shows: list[Show]):
         """ Resets the times played and last played values in show table """
+        show_ids = [show.show_id for show in shows]
         with self.engine.connect() as connection:
             new_last_played = None
             new_times_played = 0
             stmt = (update(self.shows)
+                    .where(self.shows.c.show_id.in_(show_ids))
                     .where(self.shows.c.times_played > 0)
                     .values(last_played=new_last_played,
                             times_played=new_times_played))
