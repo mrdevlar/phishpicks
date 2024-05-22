@@ -5,7 +5,7 @@ import re
 import json
 from typing import Any, Optional, List
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, Date, ForeignKey, Index, select, \
-    inspect, Boolean, update, func, distinct
+    inspect, Boolean, update, func, distinct, desc
 from sqlalchemy.sql import text, delete
 from sqlalchemy.orm import sessionmaker
 from phishpicks.configuration import Configuration
@@ -298,6 +298,26 @@ class PhishData(BaseModel):
             connection.commit()
             print("Dropping Tables")
 
+    def last_played_shows(self, last_n: int = 1):
+        with self.engine.connect() as connection:
+            query = select(self.shows.c.last_played).order_by(desc(self.shows.c.last_played)).limit(last_n)
+            last_played_date = connection.execute(query)
+            last_played_date = [last_date[0].strftime('%Y-%m-%d') for last_date in last_played_date]
+            query = select(self.shows).filter(self.shows.c.last_played.in_(last_played_date))
+            results = connection.execute(query)
+            return [Show.from_db(row) for row in results]
+
+    def reset_last_played_show_played(self, last_n: int = 1):
+        last_played_shows = self.last_played_shows(last_n=last_n)
+        last_played_shows = [show.show_id for show in last_played_shows]
+        with self.engine.connect() as connection:
+            stmt = (update(self.shows)
+                    .where(self.show.show_id.in_(last_played_shows))
+                    .values(last_played=None,
+                            times_played=0))
+            connection.execute(stmt)
+            connection.commit()
+
     def reset_played_shows(self):
         """ Resets the times played and last played values in show table """
         with self.engine.connect() as connection:
@@ -375,7 +395,7 @@ class PhishData(BaseModel):
             total_shows = list(result)[0][0]
             return total_shows
 
-    def random_shows(self, k: int = 1, exclude_played: bool = False, exclude_show_ids: list = None):
+    def random_shows(self, k: int = 1, exclude_played: bool = True, exclude_show_ids: list = None):
         if exclude_show_ids is None:
             exclude_show_ids = []
         with (self.engine.connect() as connection):
@@ -587,6 +607,7 @@ class PhishData(BaseModel):
 # pd.all_track_names()
 # pd.tracks_by_name('Ghost')
 # print(conf.is_configured())
+# pd.last_played_shows(1)
 # print(pd.total_shows())
 
 # Delete Path

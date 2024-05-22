@@ -247,7 +247,7 @@ class PhishPicks(BaseModel):
         else:
             raise ValueError('Unknown mode')
 
-    def play(self, enqueue: bool = False, update: bool = False):
+    def play(self, enqueue: bool = False, update: bool = True):
         """
         Plays the selected picks with your media player
         Args:
