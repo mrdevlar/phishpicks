@@ -1,10 +1,11 @@
 from __future__ import annotations
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 import re
 import json
 from typing import Any, Optional, List
-from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, Date, ForeignKey, Index, select, \
+from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, Date, DateTime, ForeignKey, Index, \
+    select, \
     inspect, Boolean, update, func, distinct, desc
 from sqlalchemy.sql import text, delete
 from sqlalchemy.orm import sessionmaker
@@ -55,7 +56,7 @@ class Show(BaseModel):
     show_id: int
     date: date
     venue: str
-    last_played: Optional[date]
+    last_played: Optional[datetime]
     times_played: int
     folder_path: str
 
@@ -118,6 +119,28 @@ class PhishData(BaseModel):
         else:
             raise FileNotFoundError(f"Configuration Folder {self.config.config_folder} does not exist")
 
+    def backup_last_played(self):
+        all_played = self.all_played_show_tracks()
+        backup_folder = Path(self.config.backups_folder)
+        backup_json = backup_folder / Path('played_backup.json')
+        backup_list = [
+            (show.date.strftime('%Y-%m-%d'), show.last_played.strftime('%Y-%m-%d %H:%M:%S'), show.times_played) for show
+            in all_played]
+        with open(backup_json, 'w') as file:
+            json.dump(backup_list, file)
+        print(f"Wrote Special Backup to {backup_json}")
+
+    def restore_last_played(self):
+        backup_folder = Path(self.config.backups_folder)
+        backup_json = backup_folder / Path('played_backup.json')
+        if not backup_json.exists():
+            raise FileNotFoundError("'special_backup.json' is not found")
+        else:
+            with open(backup_json, 'r') as file:
+                backup_list = json.load(file)
+            for show_id, date_time, times_played in backup_list:
+                self.update_played_show(show_id, date_time, times_played)
+
     def backup_special(self):
         """ Backs up Special Tracks Booleans """
         special_tracks = self.all_special_show_tracks()
@@ -138,7 +161,8 @@ class PhishData(BaseModel):
         else:
             with open(backup_json, 'r') as file:
                 backup_list = json.load(file)
-            special_tracks = [self.track_by_date_name(date, name, exact=True)[1] for date, name in backup_list]
+            special_tracks = [self.track_by_date_name(show_date, name, exact=True)[1] for show_date, name in
+                              backup_list]
             for track in special_tracks:
                 self.update_special_track(track)
 
@@ -150,7 +174,7 @@ class PhishData(BaseModel):
             Column('show_id', Integer, primary_key=True),
             Column('date', Date),
             Column('venue', String),
-            Column('last_played', Date, nullable=True),
+            Column('last_played', DateTime, nullable=True),
             Column('times_played', Integer, default=0),
             Column('folder_path', String),
             # extend_existing=True  # Set this parameter to True
@@ -332,15 +356,18 @@ class PhishData(BaseModel):
             connection.execute(stmt)
             connection.commit()
 
-    def update_played_show(self, show: Show):
+    def update_played_show(self, show_date: str, update_time: str = None, new_times_played: int = None):
         """ Update a Played Show's values """
-        show_id = show.show_id
-        with self.engine.connect() as connection:
-            new_last_played = date.today()
+        if not update_time:
+            update_time = datetime.now()
+        else:
+            update_time = datetime.strptime(update_time, '%Y-%m-%d %H:%M:%S')
+        if not new_times_played:
             new_times_played = self.shows.c.times_played + 1
+        with self.engine.connect() as connection:
             stmt = (update(self.shows)
-                    .where(self.shows.c.show_id == show_id)
-                    .values(last_played=new_last_played,
+                    .where(self.shows.c.date == show_date)
+                    .values(last_played=update_time,
                             times_played=new_times_played))
             connection.execute(stmt)
             connection.commit()
@@ -588,6 +615,15 @@ class PhishData(BaseModel):
             results = [(Show.from_db(row[:6]), Track.from_db(row[6:])) for row in results]
             return results
 
+    def all_played_show_tracks(self) -> list[Show]:
+        with self.engine.connect() as connection:
+            query = (select(self.shows)
+                     .where(text("shows.last_played > 0"))
+                     )
+            results = connection.execute(query)
+            return [Show.from_db(row) for row in results]
+
+
 # Not configured Path
 # conf = Configuration()
 # conf.create_configuration_folder()
@@ -600,8 +636,8 @@ class PhishData(BaseModel):
 # print(check_folders)
 
 # # # Already Configured Path
-# conf = Configuration.from_json()
-# pd = PhishData(config=conf)
+conf = Configuration.from_json()
+pd = PhishData(config=conf)
 # pd.drop_all()
 # # pd.backup_special()
 # pd.restore_special()
@@ -610,7 +646,8 @@ class PhishData(BaseModel):
 # pd.tracks_by_name('Ghost')
 # print(conf.is_configured())
 # pd.last_played_shows(1)
-# print(pd.total_shows())
+pd.restore_last_played()
+print(pd.total_shows())
 
 # Delete Path
 # conf = Configuration.from_json()

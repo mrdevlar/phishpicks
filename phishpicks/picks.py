@@ -279,7 +279,7 @@ class PhishPicks(BaseModel):
         cmd = 'powershell -Command' + f"""& "{media_player}"{add}"{sep.join(picks_folders)}" """
         if update and self._mode == 'shows':
             # Add times played to db
-            [self.db.update_played_show(pick) for pick in self.picks]
+            [self.db.update_played_show(pick.date.strftime('%Y-%m-%d')) for pick in self.picks]
         print(cmd)
         args = shlex.split(cmd)
         process = subprocess.Popen(args,

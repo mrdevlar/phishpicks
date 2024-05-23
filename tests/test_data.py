@@ -1,5 +1,5 @@
 from pathlib import Path
-from datetime import date
+from datetime import date, datetime
 
 import pytest
 
@@ -29,11 +29,12 @@ def test_update_played(settings):
     config, db = load_or_create(settings)
     assert config.is_db()
     selected_show = db.show_from_id(1)
-    db.update_played_show(selected_show)
+    db.update_played_show(selected_show.date.strftime('%Y-%m-%d'))
     results = db.query_shows('shows.show_id == 1')
     assert len(results) == 1
     result = results[0]
-    assert result.last_played == date.today()
+    last_played = result.last_played.replace(second=0, microsecond=0)
+    assert last_played == datetime.now().replace(second=0, microsecond=0)
     assert result.times_played == 1
     db.engine.dispose()
 
@@ -42,7 +43,7 @@ def test_reset_played_shows(settings):
     config, db = load_or_create(settings)
     assert config.is_db()
     selected_show = db.show_from_id(1)
-    db.update_played_show(selected_show)
+    db.update_played_show(selected_show.date.strftime('%Y-%m-%d'))
     db.reset_played_shows([selected_show])
     results = db.query_shows('shows.show_id == 1')
     assert len(results) == 1
