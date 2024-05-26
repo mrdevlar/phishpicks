@@ -204,6 +204,11 @@ class PhishPicks(BaseModel):
         show, track = self.db.track_by_date_name(show_date, track_name, exact)
         self.picks.append(track)
 
+    def pick_tracks_by_name(self, track_name: str, exact=False):
+        self.mode = 'tracks'
+        tracks = self.db.tracks_by_name(track_name, exact)
+        self.picks.extend(tracks)
+
     def tracks(self):
         """ Displays the tracks corresponding to the shows in picks """
         if self._mode == 'tracks':

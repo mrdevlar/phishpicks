@@ -543,9 +543,12 @@ class PhishData(BaseModel):
                 raise IndexError('No Track Found')
             return results[0]
 
-    def tracks_by_name(self, track_name: str) -> list[Track]:
+    def tracks_by_name(self, track_name: str, exact: bool = False) -> list[Track]:
         with self.engine.connect() as connection:
-            query = select(self.tracks).where(self.tracks.c.name.like('%' + track_name.lower() + '%'))
+            if exact:
+                query = select(self.tracks).where(self.tracks.c.name == track_name.lower())
+            else:
+                query = select(self.tracks).where(self.tracks.c.name.like('%' + track_name.lower() + '%'))
             results = connection.execute(query)
             return [Track.from_db(row) for row in results]
 
