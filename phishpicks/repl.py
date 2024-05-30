@@ -18,7 +18,7 @@ from prompt_toolkit import prompt
 
 class DateTrackCompleter(Completer):
     def __init__(self, date_completer: list, tracks_from_date: Callable):
-        date_completer.extend(['random', 'play', 'clear'])
+        date_completer.extend(['random', 'play', 'clear', 'shows', 'to_special', 'to_shows', 'exit'])
         self.date_completer = WordCompleter(date_completer, ignore_case=True, WORD=True)
         self.tracks_from_date = tracks_from_date
 
@@ -143,6 +143,8 @@ class PhishREPL(BaseModel):
             self.pick.play()
         elif user_input == 'clear':
             self.pick.clear()
+        elif user_input == 'tracks':
+            self.pick.tracks()
         elif user_input == 'exit':
             raise KeyboardInterrupt
         else:
@@ -167,6 +169,16 @@ class PhishREPL(BaseModel):
             self.pick.play()
         elif user_input == 'clear':
             self.pick.clear()
+        elif user_input == 'shows':
+            self.pick.shows()
+        elif user_input == 'to_shows':
+            self.pick.to_shows()
+            self.menu = 'shows'
+            self.shows_menu()
+            raise KeyboardInterrupt
+        elif user_input == 'to_special':
+            self.pick.to_special()
+            self.pick.db.backup_special()
         elif user_input == 'exit':
             raise KeyboardInterrupt
         else:
