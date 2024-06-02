@@ -58,12 +58,20 @@ class PhishDAP(BaseModel):
                 folder_des = str(Path(self.dap_path) / pick.folder_path)
                 print(f"Copying to {folder_des}")
                 shutil.copytree(folder_src, folder_des, dirs_exist_ok=True)
-                # self.pp.db.update_played_show(pick)
+                self.pp.db.update_played_show(pick.date)
             self.pp.clear()
             self.shows_on_dap()
             self.free_space()
         else:
             raise OSError("Insufficient Disk Space")
+
+    def dap_to_picks(self):
+        self.pp.mode = 'shows'
+        for pick in self.on_dap:
+            self.pp.picks.append(pick)
+
+    def update_played(self):
+        self.pp.to_update()
 
     def last_copied_to_dap(self, last_n: int = 1):
         self.pp.last_played_shows(last_n=last_n)
@@ -116,8 +124,11 @@ class PhishDAP(BaseModel):
 
 # pp = PhishPicks.load()
 # dp = PhishDAP(pp=pp)
+# dp.dap_to_picks()
+# dp.update_played()
+
 # # dp.clear_dap()
 # dp.pick_random_show(3)
 # dp.copy_to_dap()
-# dp.last_copied_to_dap()
+# dp.last_copied_to_dap(3)
 # print(dp)

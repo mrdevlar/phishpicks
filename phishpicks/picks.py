@@ -34,25 +34,30 @@ class PhishSelection(list):
             self.sort()
             print("\n".join([repr(x) for x in self]))
 
-    def subselect(self, match: str, mode: str):
+    def subselect(self, match: str, mode: str, verbose: bool = False):
+        # @TODO: Fix Repr Error
         if len(self) == 0:
             raise ValueError('Nothing is picked')
         if mode not in ['shows', 'tracks']:
             raise TypeError("mode must be one of {'shows', 'tracks'}")
-        selected_list = []
+        selected_list = PhishSelection()
         for pick in self:
             pick_data = pick.folder_path if mode == 'shows' else pick.file_path
             if re.search(match, pick_data, re.IGNORECASE):
                 selected_list.append(pick)
+        if verbose:
+            print("\n".join([repr(x) for x in selected_list]))
         return selected_list
 
-    def delete(self, match: str, mode: str, verbose: bool = True):
+    def delete(self, match: str, mode: str, verbose: bool = False):
+        # @TODO: Fix Repr Error
         selection = self.subselect(match=match, mode=mode)
         if verbose:
             print("Deleting...")
             print("\n".join([repr(x) for x in selection]))
         for sel in selection:
-            self.remove(sel)
+            super(PhishSelection, self).remove(sel)
+            self._map.remove(sel)
 
     def clear(self):
         super(PhishSelection, self).clear()
@@ -256,6 +261,15 @@ class PhishPicks(BaseModel):
         else:
             raise ValueError('Unknown mode')
 
+    def to_update(self):
+        if self._mode == 'tracks':
+            raise NotImplementedError("to_update is not available in 'tracks' mode")
+        elif self._mode == 'shows':
+            for show in self._picks:
+                self.db.update_played_show(show.date)
+        else:
+            raise ValueError('Unknown mode')
+
     def reset_last_played(self):
         """ Returns last_played to None and times_played to 0 """
         if self._mode == 'shows':
@@ -264,6 +278,9 @@ class PhishPicks(BaseModel):
             raise NotImplementedError("reset_last_played only available in 'shows' mode")
         else:
             raise ValueError('Unknown mode')
+
+    def subselect(self, match: str, verbose: bool = False):
+        self.picks.subselect(match, self._mode, verbose)
 
     def play(self, enqueue: bool = False, update: bool = True):
         """

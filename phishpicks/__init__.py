@@ -6,3 +6,4 @@ from .configuration import Configuration
 from .data import PhishData, Show, Track
 from .picks import PhishPicks, PhishSelection
 from .repl import PhishREPL
+from .dap import PhishDAP
