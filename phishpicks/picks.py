@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 import re
 import subprocess
 import shlex
@@ -278,6 +279,29 @@ class PhishPicks(BaseModel):
             raise NotImplementedError("reset_last_played only available in 'shows' mode")
         else:
             raise ValueError('Unknown mode')
+
+    def save_queue(self):
+        if self._mode != 'shows':
+            raise ValueError('Only available in shows mode')
+        backup_folder = Path(self.config.backups_folder)
+        backup_json = backup_folder / Path('picks_queue.json')
+        backup_list = [show.date.strftime('%Y-%m-%d') for show in self._picks]
+        with open(backup_json, 'w') as file:
+            json.dump(backup_list, file)
+        print(f"Wrote Queue Backup to {backup_json}")
+
+    def load_queue(self):
+        self.mode = 'shows'
+        backup_folder = Path(self.config.backups_folder)
+        backup_json = backup_folder / Path('picks_queue.json')
+        if not backup_json.exists():
+            raise FileNotFoundError("'picks_queue.json' is not found")
+        else:
+            with open(backup_json, 'r') as file:
+                backup_list = json.load(file)
+            ps = PhishSelection()
+            for show_date in backup_list:
+                self.pick_show(show_date)
 
     def subselect(self, match: str, verbose: bool = False):
         self.picks.subselect(match, self._mode, verbose)
