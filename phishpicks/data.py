@@ -67,7 +67,8 @@ class Show(BaseModel):
         return show
 
     def __repr__(self):
-        return f"Phish {self.date.strftime('%Y-%m-%d')} {self.venue.title()}"
+        played = f"- Played : {self.times_played}" if self.times_played > 0 else ""
+        return f"Phish {self.date.strftime('%Y-%m-%d')} {self.venue.title()} {played}"
 
     def __lt__(self, other):
         return self.date < other.date
@@ -639,8 +640,8 @@ class PhishData(BaseModel):
 # print(check_folders)
 
 # # # Already Configured Path
-conf = Configuration.from_json()
-pd = PhishData(config=conf)
+# conf = Configuration.from_json()
+# pd = PhishData(config=conf)
 # pd.drop_all()
 # # pd.backup_special()
 # pd.restore_special()
@@ -649,8 +650,8 @@ pd = PhishData(config=conf)
 # pd.tracks_by_name('Ghost')
 # print(conf.is_configured())
 # pd.last_played_shows(1)
-pd.restore_last_played()
-print(pd.total_shows())
+# pd.restore_last_played()
+# print(pd.total_shows())
 
 # Delete Path
 # conf = Configuration.from_json()
