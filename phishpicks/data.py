@@ -142,7 +142,7 @@ class PhishData(BaseModel):
             for show_id, date_time, times_played in backup_list:
                 self.update_played_show(show_id, date_time, times_played)
 
-    def backup_special(self):
+    def backup_track_special(self):
         """ Backs up Special Tracks Booleans """
         special_tracks = self.all_special_show_tracks()
         backup_folder = Path(self.config.backups_folder)
@@ -153,7 +153,7 @@ class PhishData(BaseModel):
             json.dump(backup_list, file)
         print(f"Wrote Special Backup to {backup_json}")
 
-    def restore_special(self):
+    def restore_track_special(self):
         """ Restores Special Track Booleans """
         backup_folder = Path(self.config.backups_folder)
         backup_json = backup_folder / Path('special_backup.json')
@@ -167,6 +167,12 @@ class PhishData(BaseModel):
             for track in special_tracks:
                 self.update_special_track(track)
 
+    def backup_show_special(self):
+        raise NotImplementedError
+
+    def restore_show_special(self):
+        raise NotImplementedError
+
     def create(self):
         """ Creates a SQLite Database with the required structure"""
         # define 'shows' table
@@ -178,6 +184,7 @@ class PhishData(BaseModel):
             Column('last_played', DateTime, nullable=True),
             Column('times_played', Integer, default=0),
             Column('folder_path', String),
+            Column('special', Boolean, default=False),
             # extend_existing=True  # Set this parameter to True
         )
 
@@ -382,6 +389,10 @@ class PhishData(BaseModel):
             connection.execute(stmt)
             connection.commit()
         print(f"Special Add: {track}")
+
+    def update_special_show(self, show: Show):
+        show_id = show.show_id
+        raise NotImplementedError
 
     def delete_shows(self, where_clause: str, confirm: bool = True) -> list[int]:
         """ Delete Shows Based on Arbitrary Where Clause"""
@@ -618,6 +629,9 @@ class PhishData(BaseModel):
             results = connection.execute(query)
             results = [(Show.from_db(row[:6]), Track.from_db(row[6:])) for row in results]
             return results
+
+    def all_special_shows(self):
+        raise NotImplementedError
 
     def all_played_show_tracks(self) -> list[Show]:
         with self.engine.connect() as connection:

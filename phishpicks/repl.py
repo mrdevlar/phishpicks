@@ -178,7 +178,7 @@ class PhishREPL(BaseModel):
             raise KeyboardInterrupt
         elif user_input == 'to_special':
             self.pick.to_special()
-            self.pick.db.backup_special()
+            self.pick.db.backup_track_special()
         elif user_input == 'exit':
             raise KeyboardInterrupt
         else:

@@ -242,21 +242,19 @@ class PhishPicks(BaseModel):
 
     def all_special(self):
         """ Adds all special tracks to picks """
-        special_tracks = self.db.all_special_tracks()
-        if not self._mode:
-            self.mode = 'tracks'
+        special = []
+        if self._mode == 'tracks':
+            special = self.db.all_special_tracks()
         elif self._mode == 'shows':
-            self.mode = 'tracks'
-        elif self._mode == 'tracks':
-            pass
+            special = self.db.all_special_shows()
         else:
-            raise ValueError('Unknown mode')
-        self.picks.extend(special_tracks)
+            print("Special must be selected from show or track mode")
+        self.picks.extend(special)
 
     def to_special(self):
         """ Adds all tracks in picks to special tracks """
         if self._mode == 'shows':
-            raise NotImplementedError("to_special is not available in 'shows' mode")
+            [self.db.update_special_show(show) for show in self._picks]
         elif self._mode == 'tracks':
             [self.db.update_special_track(track) for track in self._picks]
         else:

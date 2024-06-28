@@ -72,7 +72,7 @@ def test_all_track_names(settings):
     db.engine.dispose()
 
 
-def test_update_special(settings):
+def test_update_special_tracks(settings):
     config, db = load_or_create(settings)
     assert config.is_db()
     selected_track = db.track_from_id(1)
@@ -92,6 +92,14 @@ def test_update_special(settings):
     for k, v in expected.items():
         assert result_vars[k] == v
     db.engine.dispose()
+
+
+def test_update_special_shows(settings):
+    config, db = load_or_create(settings)
+    assert config.is_db()
+    selected_show = db.show_from_id(1)
+    db.update_special_show(selected_show)
+    raise NotImplementedError
 
 
 def test_show_by_date(settings):
