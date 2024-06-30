@@ -310,6 +310,7 @@ class PhishPicks(BaseModel):
         Args:
             enqueue: Do you want to enqueue, rather than replace, to the playlist?
             update: Do you want to update time last played?
+        @TODO: Bugfix when playing more than 11 files/folders
         """
         if self._mode == 'shows':
             picks_folders = [str(Path(self.config.phish_folder)) + "\\" + pick.folder_path for pick in self.picks]
