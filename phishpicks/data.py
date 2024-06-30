@@ -59,6 +59,7 @@ class Show(BaseModel):
     last_played: Optional[datetime]
     times_played: int
     folder_path: str
+    special: bool
 
     @staticmethod
     def from_db(row: tuple) -> Show:
@@ -547,7 +548,8 @@ class PhishData(BaseModel):
                          .select_from(self.shows.join(self.tracks, self.shows.c.show_id == self.tracks.c.show_id))
                          )
             results = connection.execute(query)
-            results = [(Show.from_db(row[:6]), Track.from_db(row[6:])) for row in results]
+            show_fields_len = len(Show.model_fields) # Total number of fields to split the tuple on
+            results = [(Show.from_db(row[:show_fields_len]), Track.from_db(row[show_fields_len:])) for row in results]
             if len(results) > 1:
                 print(results)
                 raise IndexError('Multiple Tracks Found')
