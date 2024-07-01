@@ -169,9 +169,13 @@ class PhishData(BaseModel):
                 self.update_special_track(track)
 
     def backup_show_special(self):
+        special_tracks = self.all_special_shows()
+        backup_folder = Path(self.config.backups_folder)
+        backup_json = backup_folder / Path('show_special_backup.json')
         raise NotImplementedError
 
     def restore_show_special(self):
+        # @TODO
         raise NotImplementedError
 
     def create(self):
@@ -393,7 +397,13 @@ class PhishData(BaseModel):
 
     def update_special_show(self, show: Show):
         show_id = show.show_id
-        raise NotImplementedError
+        with self.engine.connect() as connection:
+            stmt = (update(self.shows)
+                    .where(self.shows.c.show_id == show_id)
+                    .values(special=True))
+            connection.execute(stmt)
+            connection.commit()
+        print(f"Special Add: {show}")
 
     def delete_shows(self, where_clause: str, confirm: bool = True) -> list[int]:
         """ Delete Shows Based on Arbitrary Where Clause"""
@@ -548,7 +558,7 @@ class PhishData(BaseModel):
                          .select_from(self.shows.join(self.tracks, self.shows.c.show_id == self.tracks.c.show_id))
                          )
             results = connection.execute(query)
-            show_fields_len = len(Show.model_fields) # Total number of fields to split the tuple on
+            show_fields_len = len(Show.model_fields)  # Total number of fields to split the tuple on
             results = [(Show.from_db(row[:show_fields_len]), Track.from_db(row[show_fields_len:])) for row in results]
             if len(results) > 1:
                 print(results)
@@ -629,11 +639,17 @@ class PhishData(BaseModel):
                      .select_from(self.shows.join(self.tracks, self.shows.c.show_id == self.tracks.c.show_id))
                      )
             results = connection.execute(query)
-            results = [(Show.from_db(row[:6]), Track.from_db(row[6:])) for row in results]
+            show_fields_len = len(Show.model_fields)  # Total number of fields to split the tuple on
+            results = [(Show.from_db(row[:show_fields_len]), Track.from_db(row[show_fields_len:])) for row in results]
             return results
 
     def all_special_shows(self):
-        raise NotImplementedError
+        with self.engine.connect() as connection:
+            query = (select(self.shows)
+                     .where(text("shows.special = True")))
+            results = connection.execute(query)
+            results = [Show.from_db(row) for row in results]
+            return results
 
     def all_played_show_tracks(self) -> list[Show]:
         with self.engine.connect() as connection:
@@ -642,7 +658,6 @@ class PhishData(BaseModel):
                      )
             results = connection.execute(query)
             return [Show.from_db(row) for row in results]
-
 
 # Not configured Path
 # conf = Configuration()

@@ -97,9 +97,22 @@ def test_update_special_tracks(settings):
 def test_update_special_shows(settings):
     config, db = load_or_create(settings)
     assert config.is_db()
-    selected_show = db.show_from_id(1)
+    selected_show = db.show_from_id(3)
     db.update_special_show(selected_show)
-    raise NotImplementedError
+    results = db.all_special_shows()
+    assert len(results) == 1
+    result = results[0]
+    result_vars = vars(result)
+    expected = {'show_id': 3,
+                'date': date(2024, 1, 2),
+                'venue': 'spaceship from scent of a mule',
+                'last_played': None,
+                'times_played': 0,
+                'folder_path': '2024-01-02 Spaceship from Scent of a Mule',
+                'special': True}
+    for k, v in expected.items():
+        assert result_vars[k] == v
+    db.engine.dispose()
 
 
 def test_show_by_date(settings):
