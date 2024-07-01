@@ -136,7 +136,7 @@ class PhishData(BaseModel):
         backup_folder = Path(self.config.backups_folder)
         backup_json = backup_folder / Path('played_backup.json')
         if not backup_json.exists():
-            raise FileNotFoundError("'special_backup.json' is not found")
+            raise FileNotFoundError("'played_backup.json' is not found")
         else:
             with open(backup_json, 'r') as file:
                 backup_list = json.load(file)
@@ -172,11 +172,23 @@ class PhishData(BaseModel):
         special_tracks = self.all_special_shows()
         backup_folder = Path(self.config.backups_folder)
         backup_json = backup_folder / Path('show_special_backup.json')
-        raise NotImplementedError
+        backup_list = [(show.date.strftime('%Y-%m-%d')) for show in special_tracks]
+        with open(backup_json, 'w') as file:
+            json.dump(backup_list, file)
+        print(f"Wrote Special Backup to {backup_json}")
 
     def restore_show_special(self):
-        # @TODO
-        raise NotImplementedError
+        special_tracks = self.all_special_shows()
+        backup_folder = Path(self.config.backups_folder)
+        backup_json = backup_folder / Path('show_special_backup.json')
+        if not backup_json.exists():
+            raise FileNotFoundError("'show_special_backup.json' is not found")
+        else:
+            with open(backup_json, 'r') as file:
+                backup_list = json.load(file)
+            special_shows = [self.show_by_date(show_date) for show_date in backup_list]
+            for show in special_shows:
+                self.update_special_show(show)
 
     def create(self):
         """ Creates a SQLite Database with the required structure"""
