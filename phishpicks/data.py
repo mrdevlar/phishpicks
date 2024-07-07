@@ -175,7 +175,6 @@ class PhishData(BaseModel):
         print(f"Wrote Special Backup to {backup_json}")
 
     def restore_show_special(self):
-        special_tracks = self.all_special_shows()
         backup_folder = Path(self.config.backups_folder)
         backup_json = backup_folder / Path('show_special_backup.json')
         if not backup_json.exists():
