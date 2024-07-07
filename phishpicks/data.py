@@ -5,8 +5,7 @@ import re
 import json
 from typing import Any, Optional, List
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, Date, DateTime, ForeignKey, Index, \
-    select, \
-    inspect, Boolean, update, func, distinct, desc
+    select, inspect, Boolean, update, func, distinct, desc
 from sqlalchemy.sql import text, delete
 from sqlalchemy.orm import sessionmaker
 from phishpicks.configuration import Configuration
@@ -15,8 +14,6 @@ from mutagen.flac import FLAC
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
 
-
-# @TODO: Backup all times played in show, all tracks special
 
 class Track(BaseModel):
     track_id: int
