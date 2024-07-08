@@ -186,7 +186,7 @@ class PhishREPL(BaseModel):
             if not show_date or not track_name:
                 print("Missing Values, Try Again")
             else:
-                self.pick.pick_track(show_date, track_name)
+                self.pick.pick_track(show_date, track_name, exact=True)
 
     def main_menu(self):
         menus = ['help', 'shows', 'tracks', 'random', 'play', 'clear', 'exit']
