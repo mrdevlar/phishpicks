@@ -275,6 +275,9 @@ class PhishREPL(BaseModel):
                         self.menu = 'shows'
                 elif self._menu == 'exit':
                     print("Goodbye")  # @TODO: Witty Exit
+                    self.pick.db.backup_show_special()
+                    self.pick.db.backup_track_special()
+                    self.pick.db.backup_last_played()
                     raise KeyboardInterrupt
             except KeyboardInterrupt:
                 print("Goodbye")
