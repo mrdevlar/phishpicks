@@ -2,6 +2,7 @@ from pathlib import Path
 from datetime import date, datetime
 
 import pytest
+from .conftest import make_mp3
 
 from phishpicks import Configuration
 from phishpicks import PhishData, Show, Track
@@ -175,7 +176,32 @@ def test_track_by_date_name(settings):
 def test_show_update(settings):
     config, db = load_or_create(settings)
     assert config.is_db()
-    #@TODO: Create a new folder for the test
+
+    fake = {"album": "2025-08-22 Being, Consciousness, Bliss",
+            "tracks": ['Ghost', 'Mercury', 'Ruby Waves', "Simple", 'Sand'],
+            "extension": "mp3"}
+
+    show = settings['phish_folder'] / Path(fake['album'])
+    show.mkdir(parents=True, exist_ok=True)
+    for idx, track in enumerate(fake['tracks']):
+        idx = idx + 1
+        make_mp3({
+            'path': show,
+            'name': track,
+            'album': fake['album'],
+            'track_number': str(idx),
+            'disc_number': "2/3",
+            'artist': "Phish"
+        })
     db.update()
 
+    show_dates = db.all_show_dates()
+    assert '2025-08-22' in show_dates
+
+    new_show = db.show_by_date('2025-08-22')
+    assert new_show == '2025-08-22 Being, Consciousness, Bliss'
+
+    new_tracks = db.tracks_from_date('2025-08-22')
+    assert len(new_tracks) == 5
+    
     db.engine.dispose()

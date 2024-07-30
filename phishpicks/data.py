@@ -265,8 +265,24 @@ class PhishData(BaseModel):
             folders_to_update = all_file_shows.difference(all_db_shows)
             if folders_to_update:
                 for folder in folders_to_update:
-                    #@TODO: do the same thing as populate
-                    raise NotImplementedError
+                    date_re = r'\d\d\d\d-\d\d\-\d\d'
+                    show_date = re.findall(date_re, folder.name)[0]
+                    venue_re = self.config.venue_regex
+                    show_venue = re.findall(venue_re, folder.name)
+                    show_venue = show_venue[0].strip().lower() if show_venue else 'None'
+                    folder_path = folder.name
+
+                    show_insert = self.shows.insert().values(date=date.fromisoformat(show_date),
+                                                             venue=show_venue,
+                                                             folder_path=folder_path)
+                    connection.execute(show_insert)
+                    connection.commit()
+
+                    show_q = select(self.shows.c.show_id).where(self.shows.c.folder_path == folder_path)
+                    show_id = connection.execute(show_q)
+                    show_id = show_id.scalar()
+
+                    self.process_folder(connection, folder, show_id)
 
     def process_folder(self, connection: engine.base.Connection, folder: Path, show_id: int):
         """
