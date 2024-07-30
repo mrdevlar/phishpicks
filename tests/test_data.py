@@ -170,3 +170,12 @@ def test_track_by_date_name(settings):
     for k, v in expected_track.items():
         assert track_vars[k] == v
     db.engine.dispose()
+
+
+def test_show_update(settings):
+    config, db = load_or_create(settings)
+    assert config.is_db()
+    #@TODO: Create a new folder for the test
+    db.update()
+
+    db.engine.dispose()
