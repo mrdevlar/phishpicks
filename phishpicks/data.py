@@ -3,11 +3,10 @@ from datetime import date, datetime
 from pathlib import Path
 import re
 import json
-from typing import Any, Optional, List
+from typing import Any, Optional
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, Date, DateTime, ForeignKey, Index, \
     select, inspect, Boolean, update, func, distinct, desc
 from sqlalchemy.sql import text, delete
-from sqlalchemy.orm import sessionmaker
 from phishpicks.configuration import Configuration
 from pydantic import BaseModel
 from mutagen.flac import FLAC
@@ -228,88 +227,96 @@ class PhishData(BaseModel):
 
     def populate(self):
         """ Populates the Database with show and track information"""
-        # Create engine and start session
-        Session = sessionmaker(bind=self.engine)
-        session = Session()
 
-        # Traverse folders and add show data to the shows table
-        for folder in Path(self.config.phish_folder).glob(self.config.show_glob):
-            # WindowsPath('Z:/Music/Phish/Phish 1989-08-26 Townshend, VT (LivePhish 09) [FLAC]')
-            date_re = r'\d\d\d\d-\d\d\-\d\d'
-            show_date = re.findall(date_re, folder.name)[0]
-            venue_re = self.config.venue_regex
-            show_venue = re.findall(venue_re, folder.name)
-            show_venue = show_venue[0].strip().lower() if show_venue else 'None'
-            folder_path = folder.name
+        with self.engine.connect() as connection:
+            # Traverse folders and add show data to the shows table
+            for folder in Path(self.config.phish_folder).glob(self.config.show_glob):
+                # WindowsPath('Z:/Music/Phish/Phish 1989-08-26 Townshend, VT (LivePhish 09) [FLAC]')
+                date_re = r'\d\d\d\d-\d\d\-\d\d'
+                show_date = re.findall(date_re, folder.name)[0]
+                venue_re = self.config.venue_regex
+                show_venue = re.findall(venue_re, folder.name)
+                show_venue = show_venue[0].strip().lower() if show_venue else 'None'
+                folder_path = folder.name
 
-            show_insert = self.shows.insert().values(date=date.fromisoformat(show_date),
-                                                     venue=show_venue,
-                                                     folder_path=folder_path)
-            session.execute(show_insert)
-            session.commit()
+                show_insert = self.shows.insert().values(date=date.fromisoformat(show_date),
+                                                         venue=show_venue,
+                                                         folder_path=folder_path)
+                connection.execute(show_insert)
+                connection.commit()
 
-            show_id = session.query(self.shows.c.show_id).filter(self.shows.c.folder_path == folder_path).scalar()
+                show_q = select(self.shows.c.show_id).where(self.shows.c.folder_path == folder_path)
+                show_id = connection.execute(show_q)
+                show_id = show_id.scalar()
 
-            unsupported = []
-            print(folder)
-            for file in folder.glob("*.*"):
-                file_path = str(file)
-                track_filetype = file.suffix
-                disc_default = '0'
-                # print(file)
-                if file.suffix.lower() in ['.flac']:
-                    audio = FLAC(file)
-                    track_length_sec = int(audio.info.length)
-                    track_name = self.clean_names(audio.get('title')[0])
-                    track_number = audio.get('tracknumber')[0]
-                    track_number = self.k_out_of_n_fix(track_number) if isinstance(track_number,
-                                                                                   str) and "/" in track_number else track_number
-                    disc_number = audio.get('discnumber')
-                    disc_number = disc_number[0] if disc_number else disc_default
-                    disc_number = self.k_out_of_n_fix(disc_number) if isinstance(disc_number,
-                                                                                 str) and "/" in disc_number else disc_number
-                elif file.suffix.lower() in ['.mp3']:
-                    audio = MP3(file)
-                    track_length_sec = int(audio.info.length)
-                    track_name = self.clean_names(audio.tags['TIT2'][0])
-                    track_number = audio.tags['TRCK'][0]
-                    track_number = self.k_out_of_n_fix(track_number) if isinstance(track_number,
-                                                                                   str) and "/" in track_number else track_number
-                    disc_number = audio.get('TPOS')
-                    disc_number = disc_number[0] if disc_number else disc_default
-                    disc_number = self.k_out_of_n_fix(disc_number) if isinstance(disc_number,
-                                                                                 str) and "/" in disc_number else disc_number
-                elif file.suffix.lower() in ['.m4a']:
-                    audio = MP4(file)
-                    track_length_sec = int(audio.info.length)
-                    track_name = self.clean_names(audio.tags['©nam'][0])
-                    track_number = audio.tags['trkn'][0][0]
-                    track_number = self.k_out_of_n_fix(track_number) if isinstance(track_number,
-                                                                                   str) and "/" in track_number else track_number
-                    disc_number = audio.get('disk')
-                    disc_number = disc_number[0][0] if disc_number else disc_default
-                    disc_number = self.k_out_of_n_fix(disc_number) if isinstance(disc_number,
-                                                                                 str) and "/" in disc_number else disc_number
-                else:
-                    print(f"Unsupported File: {file}")
-                    unsupported.append(str(file))
-                    continue
-                    # raise TypeError("Unsupported file format")
+                self.process_folder(connection, folder, show_id)
 
-                track_insert = self.tracks.insert().values(
-                    show_id=show_id,
-                    disc_number=disc_number,
-                    track_number=track_number,
-                    name=track_name.lower(),
-                    filetype=track_filetype,
-                    length_sec=track_length_sec,
-                    file_path=file_path,
-                )
-                session.execute(track_insert)
-                session.commit()
+    def process_folder(self, connection: engine.base.Connection, folder: Path, show_id: int):
+        """
+        Processes a Phish show folder
 
-        # Close session
-        session.close()
+        Args:
+            connection: an active SQLAlchemy connection object
+            folder: show folder path
+            show_id: show id
+        """
+        unsupported = []
+        print(folder)
+        for file in folder.glob("*.*"):
+            file_path = str(file)
+            track_filetype = file.suffix
+            disc_default = '0'
+            # print(file)
+            if file.suffix.lower() in ['.flac']:
+                audio = FLAC(file)
+                track_length_sec = int(audio.info.length)
+                track_name = self.clean_names(audio.get('title')[0])
+                track_number = audio.get('tracknumber')[0]
+                track_number = self.k_out_of_n_fix(track_number) if isinstance(track_number,
+                                                                               str) and "/" in track_number else track_number
+                disc_number = audio.get('discnumber')
+                disc_number = disc_number[0] if disc_number else disc_default
+                disc_number = self.k_out_of_n_fix(disc_number) if isinstance(disc_number,
+                                                                             str) and "/" in disc_number else disc_number
+            elif file.suffix.lower() in ['.mp3']:
+                audio = MP3(file)
+                track_length_sec = int(audio.info.length)
+                track_name = self.clean_names(audio.tags['TIT2'][0])
+                track_number = audio.tags['TRCK'][0]
+                track_number = self.k_out_of_n_fix(track_number) if isinstance(track_number,
+                                                                               str) and "/" in track_number else track_number
+                disc_number = audio.get('TPOS')
+                disc_number = disc_number[0] if disc_number else disc_default
+                disc_number = self.k_out_of_n_fix(disc_number) if isinstance(disc_number,
+                                                                             str) and "/" in disc_number else disc_number
+            elif file.suffix.lower() in ['.m4a']:
+                audio = MP4(file)
+                track_length_sec = int(audio.info.length)
+                track_name = self.clean_names(audio.tags['©nam'][0])
+                track_number = audio.tags['trkn'][0][0]
+                track_number = self.k_out_of_n_fix(track_number) if isinstance(track_number,
+                                                                               str) and "/" in track_number else track_number
+                disc_number = audio.get('disk')
+                disc_number = disc_number[0][0] if disc_number else disc_default
+                disc_number = self.k_out_of_n_fix(disc_number) if isinstance(disc_number,
+                                                                             str) and "/" in disc_number else disc_number
+            else:
+                print(f"Unsupported File: {file}")
+                unsupported.append(str(file))
+                continue
+                # raise TypeError("Unsupported file format")
+
+            track_insert = self.tracks.insert().values(
+                show_id=show_id,
+                disc_number=disc_number,
+                track_number=track_number,
+                name=track_name.lower(),
+                filetype=track_filetype,
+                length_sec=track_length_sec,
+                file_path=file_path,
+            )
+            connection.execute(track_insert)
+            connection.commit()
 
     @staticmethod
     def k_out_of_n_fix(k_of_n: str):
