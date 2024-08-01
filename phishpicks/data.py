@@ -239,9 +239,13 @@ class PhishData(BaseModel):
                 show_venue = show_venue[0].strip().lower() if show_venue else 'None'
                 folder_path = folder.name
 
-                show_insert = self.shows.insert().values(date=date.fromisoformat(show_date),
-                                                         venue=show_venue,
-                                                         folder_path=folder_path)
+                show_insert = (self.shows.insert()
+                               .values(date=date.fromisoformat(show_date),
+                                       venue=show_venue,
+                                       folder_path=folder_path,
+                                       times_played=0,
+                                       special=False))
+
                 connection.execute(show_insert)
                 connection.commit()
 
@@ -272,9 +276,12 @@ class PhishData(BaseModel):
                     show_venue = show_venue[0].strip().lower() if show_venue else 'None'
                     folder_path = folder.name
 
-                    show_insert = self.shows.insert().values(date=date.fromisoformat(show_date),
-                                                             venue=show_venue,
-                                                             folder_path=folder_path)
+                    show_insert = (self.shows.insert()
+                                   .values(date=date.fromisoformat(show_date),
+                                           venue=show_venue,
+                                           folder_path=folder_path,
+                                           times_played=0,
+                                           special=False))
                     connection.execute(show_insert)
                     connection.commit()
 
@@ -347,6 +354,7 @@ class PhishData(BaseModel):
                 filetype=track_filetype,
                 length_sec=track_length_sec,
                 file_path=file_path,
+                special=False,
             )
             connection.execute(track_insert)
             connection.commit()

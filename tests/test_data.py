@@ -199,7 +199,12 @@ def test_show_update(settings):
     assert '2025-08-22' in show_dates
 
     new_show = db.show_by_date('2025-08-22')
-    assert new_show == '2025-08-22 Being, Consciousness, Bliss'
+    assert dict(new_show) == {'show_id': 6, 'date': date(2025, 8, 22),
+                              'venue': 'being, consciousness, bliss',
+                              'last_played': None,
+                              'times_played': 0,
+                              'folder_path': '2025-08-22 Being, Consciousness, Bliss',
+                              'special': False}
 
     new_tracks = db.tracks_from_date('2025-08-22')
     assert len(new_tracks) == 5
