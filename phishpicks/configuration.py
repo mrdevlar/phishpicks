@@ -29,9 +29,6 @@ class Configuration(BaseModel):
 
     def model_post_init(self, __context: Any):
         is_config = self.is_configured()
-        # if not is_config:
-        #     for key, value in self.configured.items():
-        #         print(f"{key!s:>25}: {value}")
 
     @staticmethod
     def from_json(config_file: str = "phishpicks.json",
@@ -41,7 +38,6 @@ class Configuration(BaseModel):
         with open(configuration_file, 'r') as file:
             data = json.load(file)
         config = Configuration.model_validate(data)
-        print(config)
         return config
 
     def save_to_json(self):
