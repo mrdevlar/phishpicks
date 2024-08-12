@@ -190,6 +190,11 @@ class PhishData(BaseModel):
         self.backup_show_special()
         self.backup_track_special()
 
+    def restore_all(self):
+        self.restore_last_played()
+        self.restore_show_special()
+        self.restore_track_special()
+
     def create(self):
         """ Creates a SQLite Database with the required structure"""
         # define 'shows' table
