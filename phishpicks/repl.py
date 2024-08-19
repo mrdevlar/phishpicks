@@ -33,8 +33,12 @@ def up_menu(event):
 
 
 def main():
-    conf = configuration_flow()
-    pd = PhishData(config=conf)
+    _menu = 'main'
+    config = configuration_flow()
+    db = PhishData(config=config)
+    pick = PhishPicks(db=db, config=config)
+    db.restore_all()
+    start(_menu)
 
 
 def configuration_flow() -> Configuration:
@@ -171,18 +175,109 @@ def configuration_prompts() -> Configuration:
         raise Exception('Unconfigured, exiting...')
 
 
-def main_menu(self):
-    menus = ['help', 'shows', 'tracks', 'random', 'play', 'clear', 'exit']
+def main_menu():
+    menus = ['help', 'configure', 'data', 'shows', 'tracks', 'random', 'play', 'clear', 'exit']
     completer = WordCompleter(menus)
     prompt_text = HTML('<style color="#FFDC00">phishpicks > </style>')
-    input = session.prompt(prompt_text,
-                           completer=completer,
-                           placeholder='',
-                           complete_while_typing=True,
-                           key_bindings=self.kb,
-                           )
-    print(input)
+    main_selection = session.prompt(prompt_text,
+                                    completer=completer,
+                                    placeholder='',
+                                    complete_while_typing=True,
+                                    key_bindings=kb,
+                                    )
+    print(main_selection)
+    return main_selection
 
+
+def shows_menu():
+    date_completer = generic_commands_append(pick.db.all_show_dates)
+    completer = WordCompleter(date_completer, WORD=True)
+    prompt_text = HTML('<style color="#FFDC00">phishpicks > shows > </style>')
+    placeholder = HTML('<style color="#6A87A0">YYYY-MM-DD</style>')
+    user_input = session.prompt(prompt_text, placeholder=placeholder, completer=completer,
+                                complete_while_typing=True, key_bindings=kb)
+    if not user_input:
+        print(pick.picks)
+    elif user_input == 'random':
+        pick.random_shows()
+    elif user_input == 'play':
+        pick.play()
+    elif user_input == 'clear':
+        pick.clear()
+    elif user_input == 'tracks':
+        pick.tracks()
+    elif user_input == 'exit':
+        raise KeyboardInterrupt
+    else:
+        selected_show, _ = extract_date(user_input)
+        if not selected_show:
+            print("Incomplete Date, Try Again")
+        else:
+            pick.pick_show(user_input.strip())
+
+
+def start(_menu):
+    while True:
+        try:
+            if _menu == 'main':
+                _menu = main_menu()
+            elif _menu == 'shows':
+                try:
+                    shows_menu()
+                except KeyboardInterrupt:
+                    _menu = 'main'
+            elif _menu == 'tracks':
+                try:
+                    tracks_menu()
+                except KeyboardInterrupt:
+                    _menu = 'main'
+            elif _menu == 'help':
+                help_menu()
+                _menu = 'main'
+            elif _menu == 'random':
+                if pick.picks:
+                    if pick.mode == 'shows':
+                        pick.random_shows()
+                        _menu = 'shows'
+                    elif pick.mode == 'tracks':
+                        pick.random_tracks()
+                        _menu = 'tracks'
+                    else:
+                        print('Cannot')
+                else:
+                    # No picks whatsoever
+                    pick.random_shows()
+                    _menu = 'shows'
+            elif _menu == 'exit':
+                print("Goodbye")  # @TODO: Witty Exit
+                # self.pick.db.backup_all()
+                raise KeyboardInterrupt
+        except KeyboardInterrupt:
+            print("Goodbye")
+            break
+
+def generic_commands_append(completer_func: Callable) -> list:
+    completion_list = completer_func()
+    commands = ['random', 'play', 'clear', ]
+    completion_list.extend(commands)
+    return completion_list
+
+def extract_date(select_statement):
+    """ Extracts the date from the selection statement """
+    # Regular expression to match a date in format YYYY-MM-DD
+    date_regex = r'\d{4}-\d{2}-\d{2}'
+    date_match = re.search(date_regex, select_statement)
+
+    # If a date is found, return it and everything else
+    if date_match:
+        date_str = date_match.group(0)
+        date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+        date = date_obj.strftime('%Y-%m-%d')
+
+        rest = select_statement.replace(date_str, '').strip()
+        return date, rest
+    else:
+        return None, select_statement
 
 class DateTrackCompleter(Completer):
     def __init__(self, date_completer: list, tracks_from_date: Callable):
@@ -286,39 +381,13 @@ class PhishREPL(BaseModel):
         speak_help.append(" ")
         print("\n".join(speak_help))
 
-    def shows_menu(self):
-        date_completer = self.generic_commands_append(self.pick.db.all_show_dates)
-        completer = WordCompleter(date_completer, WORD=True)
-        prompt_text = HTML('<style color="#FFDC00">phishpicks > shows > </style>')
-        placeholder = HTML('<style color="#6A87A0">YYYY-MM-DD</style>')
-        user_input = self.session.prompt(prompt_text, placeholder=placeholder, completer=completer,
-                                         complete_while_typing=True, key_bindings=self.kb)
-        if not user_input:
-            print(self.pick.picks)
-        elif user_input == 'random':
-            self.pick.random_shows()
-        elif user_input == 'play':
-            self.pick.play()
-        elif user_input == 'clear':
-            self.pick.clear()
-        elif user_input == 'tracks':
-            self.pick.tracks()
-        elif user_input == 'exit':
-            raise KeyboardInterrupt
-        else:
-            selected_show, _ = self.extract_date(user_input)
-            if not selected_show:
-                print("Incomplete Date, Try Again")
-            else:
-                self.pick.pick_show(user_input.strip())
-
     def tracks_menu(self):
         date_completer = self.pick.db.all_show_dates()
         completer = DateTrackCompleter(date_completer, self.pick.db.tracks_from_date)
         prompt_text = HTML('<style color="#FFDC00">phishpicks > tracks > </style>')
         placeholder = HTML('<style color="#6A87A0">YYYY-MM-DD TRACK_NAME</style>')
-        user_input = self.session.prompt(prompt_text, placeholder=placeholder, completer=completer,
-                                         complete_while_typing=True, key_bindings=self.kb)
+        user_input = session.prompt(prompt_text, placeholder=placeholder, completer=completer,
+                                    complete_while_typing=True, key_bindings=kb)
         if not user_input:
             print(self.pick.picks)
         elif user_input == 'random':
@@ -357,70 +426,3 @@ class PhishREPL(BaseModel):
             self.pick.clear()
         else:
             return user_input
-
-    @staticmethod
-    def generic_commands_append(completer_func: Callable) -> list:
-        completion_list = completer_func()
-        commands = ['random', 'play', 'clear', ]
-        completion_list.extend(commands)
-        return completion_list
-
-    @staticmethod
-    def extract_date(select_statement):
-        """ Extracts the date from the selection statement """
-        # Regular expression to match a date in format YYYY-MM-DD
-        date_regex = r'\d{4}-\d{2}-\d{2}'
-        date_match = re.search(date_regex, select_statement)
-
-        # If a date is found, return it and everything else
-        if date_match:
-            date_str = date_match.group(0)
-            date_obj = datetime.strptime(date_str, '%Y-%m-%d')
-            date = date_obj.strftime('%Y-%m-%d')
-
-            rest = select_statement.replace(date_str, '').strip()
-            return date, rest
-        else:
-            return None, select_statement
-
-    def start(self):
-        self.session = PromptSession()
-        while True:
-            try:
-                # @TODO: Check if configured, if not configured, run config
-                if self._menu == 'main':
-                    self.main_menu()
-                elif self._menu == 'shows':
-                    try:
-                        self.shows_menu()
-                    except KeyboardInterrupt:
-                        self.menu = 'main'
-                elif self._menu == 'tracks':
-                    try:
-                        self.tracks_menu()
-                    except KeyboardInterrupt:
-                        self.menu = 'main'
-                elif self._menu == 'help':
-                    self.help_menu()
-                    self.menu = 'main'
-                elif self._menu == 'random':
-                    if self.pick.picks:
-                        if self.pick.mode == 'shows':
-                            self.pick.random_shows()
-                            self.menu = 'shows'
-                        elif self.pick.mode == 'tracks':
-                            self.pick.random_tracks()
-                            self.menu = 'tracks'
-                        else:
-                            print('Cannot')
-                    else:
-                        # No picks whatsoever
-                        self.pick.random_shows()
-                        self.menu = 'shows'
-                elif self._menu == 'exit':
-                    print("Goodbye")  # @TODO: Witty Exit
-                    # self.pick.db.backup_all()
-                    raise KeyboardInterrupt
-            except KeyboardInterrupt:
-                print("Goodbye")
-                break
