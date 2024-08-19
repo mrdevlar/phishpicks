@@ -191,9 +191,18 @@ class PhishData(BaseModel):
         self.backup_track_special()
 
     def restore_all(self):
-        self.restore_last_played()
-        self.restore_show_special()
-        self.restore_track_special()
+        try:
+            self.restore_last_played()
+        except FileNotFoundError as e:
+            print(f"Backup Missing: {e}")
+        try:
+            self.restore_show_special()
+        except FileNotFoundError as e:
+            print(f"Backup Missing: {e}")
+        try:
+            self.restore_track_special()
+        except FileNotFoundError as e:
+            print(f"Backup Missing: {e}")
 
     def create(self):
         """ Creates a SQLite Database with the required structure"""
