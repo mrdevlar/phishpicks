@@ -460,7 +460,7 @@ class PhishData(BaseModel):
             connection.execute(stmt)
             connection.commit()
 
-    def update_special_track(self, track: Track):
+    def update_special_track(self, track: Track, verbose: bool = False):
         track_id = track.track_id
         with self.engine.connect() as connection:
             stmt = (update(self.tracks)
@@ -468,9 +468,10 @@ class PhishData(BaseModel):
                     .values(special=True))
             connection.execute(stmt)
             connection.commit()
-        print(f"Special Add: {track}")
+        if verbose:
+            print(f"Special Add: {track}")
 
-    def update_special_show(self, show: Show):
+    def update_special_show(self, show: Show, verbose: bool = False):
         show_id = show.show_id
         with self.engine.connect() as connection:
             stmt = (update(self.shows)
@@ -478,7 +479,8 @@ class PhishData(BaseModel):
                     .values(special=True))
             connection.execute(stmt)
             connection.commit()
-        print(f"Special Add: {show}")
+        if verbose:
+            print(f"Special Add: {show}")
 
     def delete_shows(self, where_clause: str, confirm: bool = True) -> list[int]:
         """ Delete Shows Based on Arbitrary Where Clause"""
