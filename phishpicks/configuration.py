@@ -92,6 +92,7 @@ class Configuration(BaseModel):
         db.create()
         db.populate()
         db.engine.dispose()
+        db.restore_all()
         return db
 
     def delete_configuration_folder(self):
