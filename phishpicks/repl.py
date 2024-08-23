@@ -399,36 +399,3 @@ class TrackAfterDateCompleter(Completer):
             if word.startswith(word_before_cursor.lower()):
                 yield Completion(text=word.title(), start_position=-len(word_before_cursor))
 
-
-class PhishMenu(str):
-    """ Special list for menu location """
-
-    def __init__(self, *args):
-        super(PhishMenu, self).__init__(*args)
-        self._tree = []
-
-
-class PhishREPL(BaseModel):
-    # config = Configuration = None
-    # pick: PhishPicks = None
-    kb: Any = None
-    keys: Any = None
-    session: Any = None
-    _menu: str = 'main'
-
-    @property
-    def menu(self):
-        return self._menu
-
-    @menu.setter
-    def menu(self, value):
-        self._menu = value
-
-    @staticmethod
-    def load(**kwargs) -> PhishREPL:
-        # @TODO Configuration Step Here
-        conf = Configuration()
-        is_configured = conf.is_configured()
-        # @TODO: Launch configuration wizard here
-        pp = PhishPicks.load(**kwargs)
-        return PhishREPL(pick=pp)
