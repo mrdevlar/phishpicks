@@ -424,7 +424,7 @@ class PhishData(BaseModel):
         last_played_shows = [show.show_id for show in last_played_shows]
         with self.engine.connect() as connection:
             stmt = (update(self.shows)
-                    .where(self.show.show_id.in_(last_played_shows))
+                    .where(self.shows.c.show_id.in_(last_played_shows))
                     .values(last_played=None,
                             times_played=0))
             connection.execute(stmt)
