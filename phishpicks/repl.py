@@ -166,6 +166,11 @@ class PhishREPL(BaseModel):
             try:
                 if self._menu == 'main':
                     self._menu = self.main_menu()
+                elif self._menu == 'configure':
+                    config = configuration_prompts()
+                    if config:
+                        config.save_to_json()
+                    self.menu = 'main'
                 elif self._menu == 'shows':
                     try:
                         self.shows_menu()
@@ -335,21 +340,23 @@ def configuration_prompts() -> Configuration:
                                venue_regex=venue_regex)
         return config
     else:
-        raise Exception('Unconfigured, exiting...')
+        print('Unconfigured, exiting...')
+        return None
 
 
 def help_menu():
-    # @TODO: Update the help menu
+    # @TODO: Update the help menu, make it dynamic if possible
     speak_help = list()
     speak_help.append(" ")
     speak_help.append(" _____ COMMANDS _____ ")
-    speak_help.append("  help: This List")
-    speak_help.append(" shows: Select Shows")
-    speak_help.append("tracks: Select Tracks")
-    speak_help.append("random: Random Picks")
-    speak_help.append("  play: Play Selection with Media Player")
-    speak_help.append(" clear: Clear Picks")
-    speak_help.append("  exit: Leave")
+    speak_help.append("     help: This List")
+    speak_help.append("    shows: Select Shows")
+    speak_help.append("   tracks: Select Tracks")
+    speak_help.append("   random: Random Picks")
+    speak_help.append("configure: Launch Configuration Wizard")
+    speak_help.append("     play: Play Selection with Media Player")
+    speak_help.append("    clear: Clear Picks")
+    speak_help.append("     exit: Leave")
     speak_help.append(" ")
     speak_help.append(" _____ KEYBOARD _____ ")
     speak_help.append("Backspace: return to main menu / exit")
