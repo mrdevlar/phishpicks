@@ -15,6 +15,7 @@ from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.styles import Style
 from prompt_toolkit import prompt
 import pdb
+import inspect
 
 
 # @TODO: Add ctrl backspace
@@ -123,6 +124,22 @@ class PhishREPL(BaseModel):
             else:
                 self.pick.pick_track(show_date, track_name, exact=True)
 
+    def data_menu(self):
+        all_data_methods = [func for func in dir(PhishData)
+                            if callable(getattr(PhishData, func)) and not func.startswith('_')]
+        data_completer = WordCompleter(all_data_methods, ignore_case=True, WORD=True)
+        prompt_text = HTML('<style color="#FFDC00">phishpicks > data > </style>')
+        placeholder = HTML('<style color="#6A87A0">PhishData Method</style>')
+        user_input = self.session.prompt(prompt_text, placeholder=placeholder, completer=data_completer,
+                                         complete_while_typing=True, key_bindings=self.kb)
+        user_input_list = user_input.rstrip().split(" ")
+        method = getattr(self.pick.db, user_input_list.pop(0))
+        if user_input_list:
+            print(method(*user_input_list))
+        else:
+            print(method())
+        # Ignore all self parameters
+
     @staticmethod
     def generic_commands_run(self, user_input: str) -> str:
         if not user_input:
@@ -171,6 +188,11 @@ class PhishREPL(BaseModel):
                     if config:
                         config.save_to_json()
                     self.menu = 'main'
+                elif self._menu == 'data':
+                    try:
+                        self.data_menu()
+                    except KeyboardInterrupt:
+                        self.menu = 'main'
                 elif self._menu == 'shows':
                     try:
                         self.shows_menu()
@@ -354,6 +376,7 @@ def help_menu():
     speak_help.append("   tracks: Select Tracks")
     speak_help.append("   random: Random Picks")
     speak_help.append("configure: Launch Configuration Wizard")
+    speak_help.append("     data: Launch Database Operations")
     speak_help.append("     play: Play Selection with Media Player")
     speak_help.append("    clear: Clear Picks")
     speak_help.append("     exit: Leave")
@@ -415,8 +438,16 @@ class TrackAfterDateCompleter(Completer):
                 yield Completion(text=word.title(), start_position=-len(word_before_cursor))
 
 
+class DataMenuCompleter(Completer):
+
+    def __init__(self, methods):
+        self.methods = methods
+
+    def get_completions(self, document: Document, complete_event: CompleteEvent) -> Iterable[Completion]:
+        pass
+
+
 def main():
-    _menu = 'main'
     config = configuration_flow()
     db = PhishData(config=config)
     pick = PhishPicks(db=db, config=config)
