@@ -26,6 +26,7 @@ class PhishREPL(BaseModel):
     keys: Any = None
     session: Any = None
     _menu: str = 'main'
+    diagnostic_mode: bool = False
 
     @property
     def menu(self):
@@ -38,7 +39,11 @@ class PhishREPL(BaseModel):
     def model_post_init(self, __context: Any):
         self.kb = KeyBindings()
         self.keys = []
-        self.session = PromptSession()
+        if not self.diagnostic_mode:
+            # This flag is set because the prompt session prevents
+            # CMD from executing properly on Windows Machines
+            # This allows for testing
+            self.session = PromptSession()
 
         # @TODO: Add ctrl backspace
         # @TODO: Add ctrl arrows
@@ -50,6 +55,15 @@ class PhishREPL(BaseModel):
                 raise KeyboardInterrupt
             else:
                 buffer.delete_before_cursor(count=1)
+
+    @staticmethod
+    def load_diagnostic(**kwargs) -> PhishREPL:
+        """
+        Diagnostic Loader for testing
+        """
+        conf = Configuration()
+        pp = PhishPicks.load(**kwargs)
+        return PhishREPL(pick=pp, diagnostic_mode=True)
 
     def main_menu(self):
         menus = ['help', 'configure', 'data', 'shows', 'tracks', 'random', 'play', 'clear', 'exit']

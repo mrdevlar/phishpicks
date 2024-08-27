@@ -6,7 +6,7 @@ from phishpicks.repl import DateTrackCompleter, TrackAfterDateCompleter
 
 
 def repl_load(settings):
-    return PhishREPL.load(
+    return PhishREPL.load_diagnostic(
         config_file=settings['config_file'],
         config_folder=str(settings['config_folder']),
         backups_folder=str(settings['backups_folder']),
