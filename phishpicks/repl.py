@@ -235,11 +235,10 @@ class PhishREPL(BaseModel):
                         self.pick.random_shows()
                         _menu = 'shows'
                 elif self._menu == 'exit':
-                    print("Goodbye")  # @TODO: Witty Exit
-                    # self.pick.db.backup_all()
                     raise KeyboardInterrupt
             except KeyboardInterrupt:
-                print("Goodbye")
+                print("Surrender to the Flow")
+                self.pick.db.backup_all()
                 break
 
 
