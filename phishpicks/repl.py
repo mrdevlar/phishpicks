@@ -196,6 +196,7 @@ class PhishREPL(BaseModel):
         while True:
             try:
                 if self._menu == 'main':
+                    self.pick.db.update(verbose=False)
                     self._menu = self.main_menu()
                 elif self._menu == 'configure':
                     config = configuration_prompts()

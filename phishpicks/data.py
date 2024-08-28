@@ -103,10 +103,6 @@ class PhishData(BaseModel):
             print("No 'tracks' table found")
             self.shows = None
 
-    def status(self):
-        """ Prints the status of the Database """
-        raise NotImplementedError
-
     def exists(self) -> bool:
         """ Checks if Database exists """
         if self.config.is_configuration_folder():
@@ -274,7 +270,10 @@ class PhishData(BaseModel):
 
                 self.process_folder(connection, folder, show_id)
 
-    def update(self):
+    def update(self, verbose: bool = False):
+        """
+        Checks the phish_folder and adds any new folders to the database
+        """
         with self.engine.connect() as connection:
             # grab the full list of folders from db
             all_query = select(self.shows.c.folder_path)
@@ -310,7 +309,10 @@ class PhishData(BaseModel):
 
                     self.process_folder(connection, folder, show_id)
             else:
-                print("Nothing to Update")
+                if verbose:
+                    print("Nothing to Update")
+                else:
+                    pass
 
     def process_folder(self, connection: engine.base.Connection, folder: Path, show_id: int):
         """
