@@ -309,6 +309,8 @@ class PhishData(BaseModel):
                     show_id = show_id.scalar()
 
                     self.process_folder(connection, folder, show_id)
+            else:
+                print("Nothing to Update")
 
     def process_folder(self, connection: engine.base.Connection, folder: Path, show_id: int):
         """
