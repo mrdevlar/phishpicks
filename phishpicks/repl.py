@@ -75,8 +75,11 @@ class PhishREPL(BaseModel):
                                              complete_while_typing=True,
                                              key_bindings=self.kb,
                                              )
-        print(main_selection)
-        return main_selection
+        if main_selection:
+            return main_selection
+        else:
+            print("Please make a selection or type `help` for commands")
+            return 'main'
 
     def shows_menu(self):
         date_completer = self.generic_commands_append(self.pick.db.all_show_dates)
@@ -93,6 +96,8 @@ class PhishREPL(BaseModel):
             self.pick.play()
         elif user_input == 'clear':
             self.pick.clear()
+        elif user_input == 'help':
+            self.help_menu()
         elif user_input == 'tracks':
             self.pick.tracks()
         elif user_input == 'exit':
@@ -119,6 +124,8 @@ class PhishREPL(BaseModel):
             self.pick.play()
         elif user_input == 'clear':
             self.pick.clear()
+        elif user_input == 'help':
+            self.help_menu()
         elif user_input == 'shows':
             self.pick.shows()
         elif user_input == 'to_shows':
@@ -152,7 +159,28 @@ class PhishREPL(BaseModel):
             print(method(*user_input_list))
         else:
             print(method())
-        # Ignore all self parameters
+
+    def help_menu(self):
+        speak_help = list()
+        speak_help.append(" ")
+        speak_help.append(" _____ COMMANDS _____ ")
+        speak_help.append("     help: This List")
+        speak_help.append("    shows: Select Shows")
+        speak_help.append("   tracks: Select Tracks")
+        speak_help.append("   random: Random Picks")
+        speak_help.append("configure: Launch Configuration Wizard")
+        speak_help.append("     data: Launch Database Operations")
+        speak_help.append("     play: Play Selection with Media Player")
+        speak_help.append("    clear: Clear Picks")
+        speak_help.append("     exit: Leave")
+        speak_help.append(" ")
+        speak_help.append(" _____ KEYBOARD _____ ")
+        speak_help.append("Backspace: return to main menu / exit")
+        speak_help.append("      Tab: cycle through autocomplete")
+        speak_help.append("    Space: continues text")
+        speak_help.append("    Enter: submits command")
+        speak_help.append(" ")
+        print("\n".join(speak_help))
 
     @staticmethod
     def generic_commands_run(self, user_input: str) -> str:
@@ -219,22 +247,20 @@ class PhishREPL(BaseModel):
                     except KeyboardInterrupt:
                         self.menu = 'main'
                 elif self._menu == 'help':
-                    help_menu()
+                    self.help_menu()
                     self.menu = 'main'
                 elif self._menu == 'random':
                     if self.pick.picks:
                         if self.pick.mode == 'shows':
                             self.pick.random_shows()
-                            _menu = 'shows'
+                            self.menu = 'shows'
                         elif self.pick.mode == 'tracks':
                             self.pick.random_tracks()
-                            _menu = 'tracks'
-                        else:
-                            print('Cannot')
+                            self.menu = 'tracks'
                     else:
                         # No picks whatsoever
                         self.pick.random_shows()
-                        _menu = 'shows'
+                        self.menu = 'shows'
                 elif self._menu == 'exit':
                     raise KeyboardInterrupt
             except KeyboardInterrupt:
@@ -378,30 +404,6 @@ def configuration_prompts() -> Configuration:
     else:
         print('Unconfigured, exiting...')
         return None
-
-
-def help_menu():
-    # @TODO: Update the help menu, make it dynamic if possible
-    speak_help = list()
-    speak_help.append(" ")
-    speak_help.append(" _____ COMMANDS _____ ")
-    speak_help.append("     help: This List")
-    speak_help.append("    shows: Select Shows")
-    speak_help.append("   tracks: Select Tracks")
-    speak_help.append("   random: Random Picks")
-    speak_help.append("configure: Launch Configuration Wizard")
-    speak_help.append("     data: Launch Database Operations")
-    speak_help.append("     play: Play Selection with Media Player")
-    speak_help.append("    clear: Clear Picks")
-    speak_help.append("     exit: Leave")
-    speak_help.append(" ")
-    speak_help.append(" _____ KEYBOARD _____ ")
-    speak_help.append("Backspace: return to main menu / exit")
-    speak_help.append("      Tab: cycle through autocomplete")
-    speak_help.append("    Space: continues text")
-    speak_help.append("    Enter: submits command")
-    speak_help.append(" ")
-    print("\n".join(speak_help))
 
 
 class DateTrackCompleter(Completer):
