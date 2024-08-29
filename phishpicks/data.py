@@ -132,8 +132,9 @@ class PhishData(BaseModel):
         else:
             with open(backup_json, 'r') as file:
                 backup_list = json.load(file)
-            for show_id, date_time, times_played in backup_list:
-                self.update_played_show(show_id, date_time, times_played)
+            if backup_list:
+                for show_id, date_time, times_played in backup_list:
+                    self.update_played_show(show_id, date_time, times_played)
 
     def backup_track_special(self):
         """ Backs up Special Tracks Booleans """
@@ -155,10 +156,11 @@ class PhishData(BaseModel):
         else:
             with open(backup_json, 'r') as file:
                 backup_list = json.load(file)
-            special_tracks = [self.track_by_date_name(show_date, name, exact=True)[1] for show_date, name in
-                              backup_list]
-            for track in special_tracks:
-                self.update_special_track(track)
+            if backup_list:
+                special_tracks = [self.track_by_date_name(show_date, name, exact=True)[1] for show_date, name in
+                                  backup_list]
+                for track in special_tracks:
+                    self.update_special_track(track)
 
     def backup_show_special(self):
         special_tracks = self.all_special_shows()
@@ -177,9 +179,10 @@ class PhishData(BaseModel):
         else:
             with open(backup_json, 'r') as file:
                 backup_list = json.load(file)
-            special_shows = [self.show_by_date(show_date) for show_date in backup_list]
-            for show in special_shows:
-                self.update_special_show(show)
+            if backup_list:
+                special_shows = [self.show_by_date(show_date) for show_date in backup_list]
+                for show in special_shows:
+                    self.update_special_show(show)
 
     def backup_all(self):
         self.backup_last_played()
