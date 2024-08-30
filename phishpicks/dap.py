@@ -11,7 +11,6 @@ class PhishDAP(BaseModel):
     pp: PhishPicks
     on_dap: Any = None
     dap_path: str = None
-    date_re: str = r'\d\d\d\d-\d\d\-\d\d'
     free: int = 0
 
     def __repr__(self):
@@ -28,20 +27,19 @@ class PhishDAP(BaseModel):
             selection += "\n_______ No Picks Present _______"
         return selection
 
-    def model_post_init(self, __context: Any) -> None:
+    def connect(self):
         if self.pp.config.is_dap_folder():
             self.dap_path = self.pp.config.dap_folder
+            self.shows_on_dap()
+            print(self.free_space())
         else:
             raise RuntimeError(f"No Device at {self.dap_path}! Digital Audio Player Is Not Configured or Connected")
-        self.on_dap = PhishSelection()
-        self.shows_on_dap()
-        self.free_space()
 
     def shows_on_dap(self):
         self.on_dap.clear()
         shows = []
         for folder in Path(self.dap_path).glob(self.pp.config.show_glob):
-            show_date = re.findall(self.date_re, folder.name)[0]
+            show_date = re.findall(r'\d\d\d\d-\d\d-\d\d', folder.name)[0]
             show = self.pp.db.show_by_date(show_date)
             shows.append(show)
         self.on_dap.extend(shows)
