@@ -10,7 +10,7 @@ from phishpicks import PhishPicks, PhishSelection
 class PhishDAP(BaseModel):
     pp: PhishPicks
     on_dap: Any = None
-    dap_path: str = str(Path('E:\\01_Phish'))  # @TODO: Replace with pp.config
+    dap_path: str = None
     date_re: str = r'\d\d\d\d-\d\d\-\d\d'
     free: int = 0
 
@@ -29,7 +29,9 @@ class PhishDAP(BaseModel):
         return selection
 
     def model_post_init(self, __context: Any) -> None:
-        if not Path(self.dap_path).exists():
+        if self.pp.config.is_dap_folder():
+            self.dap_path = self.pp.config.dap_folder
+        else:
             raise RuntimeError(f"No Device at {self.dap_path}! Digital Audio Player Is Not Configured or Connected")
         self.on_dap = PhishSelection()
         self.shows_on_dap()
