@@ -82,8 +82,9 @@ class PhishREPL(BaseModel):
             return 'main'
 
     def shows_menu(self):
-        date_completer = self.generic_commands_append(self.pick.db.all_show_dates)
-        completer = WordCompleter(date_completer, WORD=True)
+        show_completer = self.pick.db.all_show_dates()
+        show_completer.extend(['random', 'load_queue', 'save_queue', 'play', 'clear', 'help', 'tracks',])
+        completer = WordCompleter(show_completer, WORD=True)
         prompt_text = HTML('<style color="#FFDC00">phishpicks > shows > </style>')
         placeholder = HTML('<style color="#6A87A0">YYYY-MM-DD</style>')
         user_input = self.session.prompt(prompt_text, placeholder=placeholder, completer=completer,
@@ -92,6 +93,10 @@ class PhishREPL(BaseModel):
             print(self.pick.picks)
         elif user_input == 'random':
             self.pick.random_shows()
+        elif user_input == 'load_queue':
+            self.pick.load_queue()
+        elif user_input == 'save_queue':
+            self.pick.save_queue()
         elif user_input == 'play':
             self.pick.play()
         elif user_input == 'clear':
@@ -166,6 +171,7 @@ class PhishREPL(BaseModel):
             print('data method not found')
 
     def dap_menu(self):
+
         raise NotImplementedError
 
     def help_menu(self):
@@ -203,13 +209,6 @@ class PhishREPL(BaseModel):
             self.pick.clear()
         else:
             return user_input
-
-    @staticmethod
-    def generic_commands_append(completer_func: Callable) -> list:
-        completion_list = completer_func()
-        commands = ['random', 'play', 'clear', ]
-        completion_list.extend(commands)
-        return completion_list
 
     @staticmethod
     def extract_date(select_statement):
