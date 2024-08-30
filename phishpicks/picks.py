@@ -294,9 +294,8 @@ class PhishPicks(BaseModel):
         else:
             with open(backup_json, 'r') as file:
                 backup_list = json.load(file)
-            ps = PhishSelection()
-            for show_date in backup_list:
-                self.pick_show(show_date)
+            shows = [self.db.show_by_date(show_date) for show_date in backup_list]
+            self.picks.extend(shows)
 
     def subselect(self, match: str, verbose: bool = False):
         self.picks.subselect(match, self._mode, verbose)
