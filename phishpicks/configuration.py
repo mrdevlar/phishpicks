@@ -16,6 +16,7 @@ class Configuration(BaseModel):
     phish_db: str = "phish.db"
     show_glob: str = "Phish [0-9]*"
     venue_regex: str = r'Phish \d\d\d\d-\d\d-\d\d (.*?.*)'
+    dap_folder: str = str(Path("E://01_Phish"))
     configured: dict = None
 
     def __repr__(self):
@@ -77,6 +78,9 @@ class Configuration(BaseModel):
         return Path(self.media_player_path).exists()
 
     def is_phish_folder(self) -> bool:
+        return Path(self.phish_folder).exists()
+
+    def is_dap_folder(self) -> bool:
         return Path(self.phish_folder).exists()
 
     def create_configuration_folder(self):
