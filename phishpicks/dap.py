@@ -30,8 +30,10 @@ class PhishDAP(BaseModel):
     def connect(self):
         if self.pp.config.is_dap_folder():
             self.dap_path = self.pp.config.dap_folder
+            self.on_dap = PhishSelection()
             self.shows_on_dap()
-            print(self.free_space())
+            self.free_space()
+            print(f"{self.free} bytes free")
         else:
             raise RuntimeError(f"No Device at {self.dap_path}! Digital Audio Player Is Not Configured or Connected")
 
