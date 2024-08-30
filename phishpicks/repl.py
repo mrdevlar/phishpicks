@@ -66,7 +66,7 @@ class PhishREPL(BaseModel):
         return PhishREPL(pick=pp, diagnostic_mode=True)
 
     def main_menu(self):
-        menus = ['help', 'configure', 'data', 'shows', 'tracks', 'random', 'play', 'clear', 'exit']
+        menus = ['help', 'configure', 'data', 'dap', 'shows', 'tracks', 'random', 'play', 'clear', 'exit']
         completer = WordCompleter(menus)
         prompt_text = HTML('<style color="#FFDC00">phishpicks > </style>')
         main_selection = self.session.prompt(prompt_text,
@@ -75,7 +75,7 @@ class PhishREPL(BaseModel):
                                              complete_while_typing=True,
                                              key_bindings=self.kb,
                                              )
-        if main_selection:
+        if main_selection and main_selection in menus:
             return main_selection
         else:
             print("Please make a selection or type `help` for commands")
@@ -148,17 +148,25 @@ class PhishREPL(BaseModel):
     def data_menu(self):
         all_data_methods = [func for func in dir(PhishData)
                             if callable(getattr(PhishData, func)) and not func.startswith('_')]
+        #@TODO: Replace with function completer
         data_completer = WordCompleter(all_data_methods, ignore_case=True, WORD=True)
         prompt_text = HTML('<style color="#FFDC00">phishpicks > data > </style>')
         placeholder = HTML('<style color="#6A87A0">PhishData Method</style>')
         user_input = self.session.prompt(prompt_text, placeholder=placeholder, completer=data_completer,
                                          complete_while_typing=True, key_bindings=self.kb)
         user_input_list = user_input.rstrip().split(" ")
-        method = getattr(self.pick.db, user_input_list.pop(0))
-        if user_input_list:
-            print(method(*user_input_list))
+        method_name = user_input_list.pop(0)
+        if method_name in all_data_methods:
+            method = getattr(self.pick.db, method_name)
+            if user_input_list:
+                print(method(*user_input_list))
+            else:
+                print(method())
         else:
-            print(method())
+            print('data method not found')
+
+    def dap_menu(self):
+        raise NotImplementedError
 
     def help_menu(self):
         speak_help = list()
@@ -170,6 +178,7 @@ class PhishREPL(BaseModel):
         speak_help.append("   random: Random Picks")
         speak_help.append("configure: Launch Configuration Wizard")
         speak_help.append("     data: Launch Database Operations")
+        speak_help.append("      dap: Digital Audio Player Functions")
         speak_help.append("     play: Play Selection with Media Player")
         speak_help.append("    clear: Clear Picks")
         speak_help.append("     exit: Leave")
@@ -234,6 +243,11 @@ class PhishREPL(BaseModel):
                 elif self._menu == 'data':
                     try:
                         self.data_menu()
+                    except KeyboardInterrupt:
+                        self.menu = 'main'
+                elif self._menu == 'dap':
+                    try:
+                        self.dap_menu()
                     except KeyboardInterrupt:
                         self.menu = 'main'
                 elif self._menu == 'shows':
