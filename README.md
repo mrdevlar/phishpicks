@@ -7,6 +7,7 @@ An automatic system for playing randomized Phish shows.
 
 While it was designed to be used with Phish shows, in principle, nothing prevents this from being used to play any type of other live shows. The criteria for operation is:
 - Folders must contain unique dates for shows
+- Dates are in YYYY-MM-DD format in the folder names
 - Audio must be in mp3, flac or m4a files
 - All audio files must have ID3 tags
 
@@ -64,4 +65,12 @@ Backspace: return to main menu / exit
 ```
 
 ## Notes
-- `data` - data methods used to manipulate the database, can be used to `update` when new folders are added, as well as `drop_all` and `populate` to reset everything. Generally, update is done on launch of `phishpicks` also. 
+`data` - data methods used to manipulate the database.
+
+There are plenty of things you can do with the database outside of normal operations (picking and playing). Any method in the `data.py` file can be called from this menu.
+
+Can be used to `update` when new folders are added, as well as `drop_all` and `populate` to reset everything. Generally, update is done on launch of `phishpicks` also. 
+
+## TODOS
+- Make gifs of operations to stick into this README.
+- Make a CONTRIBUTORS file
