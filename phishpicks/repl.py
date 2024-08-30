@@ -198,19 +198,6 @@ class PhishREPL(BaseModel):
         print("\n".join(speak_help))
 
     @staticmethod
-    def generic_commands_run(self, user_input: str) -> str:
-        if not user_input:
-            print(self.pick.picks)
-        elif user_input == 'random':
-            self.pick.random_shows()
-        elif user_input == 'play':
-            self.pick.play()
-        elif user_input == 'clear':
-            self.pick.clear()
-        else:
-            return user_input
-
-    @staticmethod
     def extract_date(select_statement):
         """ Extracts the date from the selection statement """
         # Regular expression to match a date in format YYYY-MM-DD
