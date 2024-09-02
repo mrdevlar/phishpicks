@@ -81,7 +81,7 @@ class Configuration(BaseModel):
         return Path(self.phish_folder).exists()
 
     def is_dap_folder(self) -> bool:
-        return Path(self.phish_folder).exists()
+        return Path(self.dap_folder).exists()
 
     def create_configuration_folder(self):
         Path(self.config_folder).mkdir(parents=True, exist_ok=True)
