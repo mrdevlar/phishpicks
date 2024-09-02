@@ -210,3 +210,12 @@ def test_show_update(settings):
     assert len(new_tracks) == 5
     
     db.engine.dispose()
+
+
+def test_reset_db(settings):
+    config, db = load_or_create(settings)
+    assert config.is_db()
+
+    db.reset_db()
+    assert config.is_db()
+    db.engine.dispose()

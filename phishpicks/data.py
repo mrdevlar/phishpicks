@@ -215,7 +215,7 @@ class PhishData(BaseModel):
             Column('times_played', Integer, default=0),
             Column('folder_path', String),
             Column('special', Boolean, default=False),
-            # extend_existing=True  # Set this parameter to True
+            extend_existing=True
         )
 
         # define 'tracks' table
@@ -230,7 +230,7 @@ class PhishData(BaseModel):
             Column('length_sec', Integer),
             Column('special', Boolean, default=False),
             Column('file_path', String),
-            # extend_existing=True  # Set this parameter to True
+            extend_existing=True
         )
 
         # create indexes
@@ -405,17 +405,24 @@ class PhishData(BaseModel):
             connection.execute(stmt_tracks)
 
             # Remove all indexes
-            Index('ix_shows_date', self.shows.c.date).drop(bind=connection, checkfirst=True)
-            Index('ix_shows_venue', self.shows.c.venue).drop(bind=connection, checkfirst=True)
-            Index('ix_shows_folder_path', self.shows.c.folder_path).drop(bind=connection, checkfirst=True)
-            Index('ix_tracks_name', self.tracks.c.name).drop(bind=connection, checkfirst=True)
-            Index('ix_tracks_file_path', self.tracks.c.file_path).drop(bind=connection, checkfirst=True)
+            for index in self.meta.tables.values():
+                for ix in index.indexes:
+                    ix.drop(bind=connection, checkfirst=True)
 
             # Commit the transaction
-            # self.meta.reflect(connection)
             self.meta.drop_all(connection)
             connection.commit()
             print("Dropping Tables")
+
+        # Reinitialize if you want to rebuild in the same session
+        self.meta = MetaData()
+        self.inspector = inspect(self.engine)
+
+    def reset_db(self):
+        self.drop_all()
+        self.create()
+        self.populate()
+        self.restore_all()
 
     def last_played_shows(self, last_n: int = 1):
         with self.engine.connect() as connection:
