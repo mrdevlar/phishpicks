@@ -113,7 +113,7 @@ class PhishData(BaseModel):
         else:
             raise FileNotFoundError(f"Configuration Folder {self.config.config_folder} does not exist")
 
-    def backup_last_played(self):
+    def backup_last_played(self, verbose: bool = False):
         all_played = self.all_played_show_tracks()
         backup_folder = Path(self.config.backups_folder)
         backup_json = backup_folder / Path('played_backup.json')
@@ -122,7 +122,8 @@ class PhishData(BaseModel):
             in all_played]
         with open(backup_json, 'w') as file:
             json.dump(backup_list, file)
-        print(f"Wrote Special Backup to {backup_json}")
+        if verbose:
+            print(f"Wrote Special Backup to {backup_json}")
 
     def restore_last_played(self):
         backup_folder = Path(self.config.backups_folder)
@@ -136,7 +137,7 @@ class PhishData(BaseModel):
                 for show_id, date_time, times_played in backup_list:
                     self.update_played_show(show_id, date_time, times_played)
 
-    def backup_track_special(self):
+    def backup_track_special(self, verbose: bool = False):
         """ Backs up Special Tracks Booleans """
         special_tracks = self.all_special_show_tracks()
         backup_folder = Path(self.config.backups_folder)
@@ -145,7 +146,8 @@ class PhishData(BaseModel):
         backup_list = [(show.date.strftime('%Y-%m-%d'), track.name) for show, track in special_tracks]
         with open(backup_json, 'w') as file:
             json.dump(backup_list, file)
-        print(f"Wrote Special Backup to {backup_json}")
+        if verbose:
+            print(f"Wrote Special Backup to {backup_json}")
 
     def restore_track_special(self):
         """ Restores Special Track Booleans """
@@ -162,14 +164,15 @@ class PhishData(BaseModel):
                 for track in special_tracks:
                     self.update_special_track(track)
 
-    def backup_show_special(self):
+    def backup_show_special(self, verbose: bool = False):
         special_tracks = self.all_special_shows()
         backup_folder = Path(self.config.backups_folder)
         backup_json = backup_folder / Path('show_special_backup.json')
         backup_list = [(show.date.strftime('%Y-%m-%d')) for show in special_tracks]
         with open(backup_json, 'w') as file:
             json.dump(backup_list, file)
-        print(f"Wrote Special Backup to {backup_json}")
+        if verbose:
+            print(f"Wrote Special Backup to {backup_json}")
 
     def restore_show_special(self):
         backup_folder = Path(self.config.backups_folder)
@@ -184,10 +187,10 @@ class PhishData(BaseModel):
                 for show in special_shows:
                     self.update_special_show(show)
 
-    def backup_all(self):
-        self.backup_last_played()
-        self.backup_show_special()
-        self.backup_track_special()
+    def backup_all(self, verbose: bool = False):
+        self.backup_last_played(verbose=verbose)
+        self.backup_show_special(verbose=verbose)
+        self.backup_track_special(verbose=verbose)
 
     def restore_all(self):
         try:
