@@ -316,6 +316,7 @@ class PhishREPL(BaseModel):
                 elif self._menu == 'exit':
                     raise KeyboardInterrupt
             except KeyboardInterrupt:
+                #@TODO: Random exit lyrics
                 print("Surrender to the Flow")
                 self.pick.db.backup_all()
                 break
@@ -429,6 +430,21 @@ def configuration_prompts() -> Configuration:
     print(f"Backups Folder set to {media_player_path}")
     print("\n")
 
+    # What is your dap_folder path?
+    # [0] "E://01_Phish"
+    # OR Manually enter a dap_folder
+    print("Digital Audio Player Path")
+    print(f"[0] {Configuration.model_fields['dap_folder'].default}")
+    print("OR Manually enter a dap_folder")
+    prompt_text = HTML('<style color="#FFDC00">phishpicks > configuration > dap_folder > </style>')
+    user_input = session.prompt(prompt_text, key_bindings=kb)
+    if user_input in ['', '0']:
+        dap_folder = Configuration.model_fields['dap_folder'].default
+    else:
+        dap_folder = user_input
+    print(f"Digital Audio Player Path set to {dap_folder}")
+    print("\n")
+
     # Print all the attributes in Configuration
     # Confirm?
     # Yes / No
@@ -440,6 +456,7 @@ def configuration_prompts() -> Configuration:
     print(f"Configuration Folder set to {config_folder}")
     print(f"Backups Folder set to {backups_folder}")
     print(f"Backups Folder set to {media_player_path}")
+    print(f"Digital Audio Player Path set to {dap_folder}")
     print("\n")
     print("Confirm? [Y]")
     prompt_text = HTML('<style color="#FFDC00">phishpicks > configuration > configuration > </style>')
@@ -451,7 +468,8 @@ def configuration_prompts() -> Configuration:
                                phish_folder=phish_folder,
                                media_player_path=media_player_path,
                                show_glob=show_glob,
-                               venue_regex=venue_regex)
+                               venue_regex=venue_regex,
+                               dap_folder=dap_folder,)
         return config
     else:
         print('Unconfigured, exiting...')
