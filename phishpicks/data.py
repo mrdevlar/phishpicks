@@ -541,7 +541,9 @@ class PhishData(BaseModel):
             total_shows = list(result)[0][0]
             return total_shows
 
-    def random_shows(self, k: int = 1, exclude_played: bool = True, exclude_show_ids: list = None):
+    def random_shows(self, k: int = 1, exclude_played: bool = None, exclude_show_ids: list = None):
+        if not exclude_played:
+            exclude_played = self.config.exhaustion_mode
         if exclude_show_ids is None:
             exclude_show_ids = []
         with (self.engine.connect() as connection):
