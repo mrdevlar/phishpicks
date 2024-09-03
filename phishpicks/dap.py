@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 from pydantic import BaseModel
 from phishpicks import PhishPicks, PhishSelection
+import pdb
 
 
 class PhishDAP(BaseModel):
@@ -29,18 +30,18 @@ class PhishDAP(BaseModel):
 
     def connect(self):
         if self.pp.config.is_dap_folder():
-            self.dap_path = self.pp.config.dap_folder
+            # pdb.set_trace()
             self.on_dap = PhishSelection()
             self.shows_on_dap()
             self.free_space()
             print(f"{self.free} bytes free")
         else:
-            raise RuntimeError(f"No Device at {self.dap_path}! Digital Audio Player Is Not Configured or Connected")
+            raise RuntimeError(f"No Device at '{self.pp.config.dap_folder}'. Digital Audio Player Is Not Configured or Connected!")
 
     def shows_on_dap(self):
         self.on_dap.clear()
         shows = []
-        for folder in Path(self.dap_path).glob(self.pp.config.show_glob):
+        for folder in Path(self.pp.config.dap_folder).glob(self.pp.config.show_glob):
             show_date = re.findall(r'\d\d\d\d-\d\d-\d\d', folder.name)[0]
             show = self.pp.db.show_by_date(show_date)
             shows.append(show)
@@ -57,7 +58,7 @@ class PhishDAP(BaseModel):
         if self.free > self.pick_size():
             for pick in self.pp.picks:
                 folder_src = str(Path(self.pp.config.phish_folder) / pick.folder_path)
-                folder_des = str(Path(self.dap_path) / pick.folder_path)
+                folder_des = str(Path(self.pp.config.dap_folder) / pick.folder_path)
                 print(f"Copying to {folder_des}")
                 shutil.copytree(folder_src, folder_des, dirs_exist_ok=True)
                 self.pp.db.update_played_show(pick.date)
@@ -84,7 +85,7 @@ class PhishDAP(BaseModel):
 
     def clear_dap(self):
         for sel in self.on_dap:
-            dap_show = Path(self.dap_path) / Path(sel.folder_path)
+            dap_show = Path(self.pp.config.dap_folder) / Path(sel.folder_path)
             print(f"Deleting {dap_show}")
             shutil.rmtree(dap_show)
         self.shows_on_dap()
@@ -92,7 +93,7 @@ class PhishDAP(BaseModel):
     def delete_from_dap(self, match: str = "", confirm: bool = True):
         selection = self.select_on_dap(match)
         for sel in selection:
-            dap_show = Path(self.dap_path) / Path(sel.folder_path)
+            dap_show = Path(self.pp.config.dap_folder) / Path(sel.folder_path)
             assert dap_show.exists(), "Show does not exist"
             assert dap_show.is_dir(), "Show is not a folder"
             try:
@@ -114,7 +115,7 @@ class PhishDAP(BaseModel):
         self.shows_on_dap()
 
     def free_space(self):
-        _, _, self.free = shutil.disk_usage(self.dap_path)
+        _, _, self.free = shutil.disk_usage(self.pp.config.dap_folder)
 
     def pick_size(self):
         size = 0

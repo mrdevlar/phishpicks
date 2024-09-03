@@ -83,7 +83,7 @@ class PhishREPL(BaseModel):
 
     def shows_menu(self):
         show_completer = self.pick.db.all_show_dates()
-        show_completer.extend(['random', 'load_queue', 'save_queue', 'play', 'clear', 'help', 'tracks',])
+        show_completer.extend(['random', 'load_queue', 'save_queue', 'play', 'clear', 'help', 'tracks', ])
         completer = WordCompleter(show_completer, WORD=True)
         prompt_text = HTML('<style color="#FFDC00">phishpicks > shows > </style>')
         placeholder = HTML('<style color="#6A87A0">YYYY-MM-DD</style>')
@@ -153,7 +153,7 @@ class PhishREPL(BaseModel):
     def data_menu(self):
         all_data_methods = [func for func in dir(PhishData)
                             if callable(getattr(PhishData, func)) and not func.startswith('_')]
-        #@TODO: Replace with function completer
+        # @TODO: Replace with function completer
         data_completer = WordCompleter(all_data_methods, ignore_case=True, WORD=True)
         prompt_text = HTML('<style color="#FFDC00">phishpicks > data > </style>')
         placeholder = HTML('<style color="#6A87A0">PhishData Method</style>')
@@ -171,8 +171,22 @@ class PhishREPL(BaseModel):
             print('data method not found')
 
     def dap_menu(self):
+        from phishpicks import PhishDAP  # @TODO: Fix import
 
-        raise NotImplementedError
+        all_dap_methods = [func for func in dir(PhishDAP)
+                           if callable(getattr(PhishDAP, func)) and not func.startswith('_')]
+        dap_completer = WordCompleter(all_dap_methods, ignore_case=True, WORD=True)
+        try:
+            dap = PhishDAP(pp=self.pick)
+            dap.connect()
+
+            prompt_text = HTML('<style color="#FFDC00">phishpicks > dap > </style>')
+            placeholder = HTML('<style color="#6A87A0">Digital Audio Player Methods</style>')
+            user_input = self.session.prompt(prompt_text, placeholder=placeholder, completer=dap_completer,
+                                             complete_while_typing=True, key_bindings=self.kb)
+        except RuntimeError as e:
+            print(e)
+            self.menu = 'main'
 
     def help_menu(self):
         speak_help = list()
