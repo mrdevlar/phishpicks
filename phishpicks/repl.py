@@ -90,7 +90,7 @@ class PhishREPL(BaseModel):
         user_input = self.session.prompt(prompt_text, placeholder=placeholder, completer=completer,
                                          complete_while_typing=True, key_bindings=self.kb)
         if not user_input:
-            print(self.pick.picks)
+            print(repr(self.pick))
         elif user_input == 'random':
             self.pick.random_shows()
         elif user_input == 'load_queue':
@@ -113,6 +113,7 @@ class PhishREPL(BaseModel):
                 print("Incomplete Date, Try Again")
             else:
                 self.pick.pick_show(user_input.strip())
+                print(repr(self.pick))
 
     def tracks_menu(self):
         date_completer = self.pick.db.all_show_dates()
@@ -122,7 +123,7 @@ class PhishREPL(BaseModel):
         user_input = self.session.prompt(prompt_text, placeholder=placeholder, completer=completer,
                                          complete_while_typing=True, key_bindings=self.kb)
         if not user_input:
-            print(self.pick.picks)
+            print(repr(self.pick))
         elif user_input == 'random':
             self.pick.random_tracks()
         elif user_input == 'play':
@@ -149,6 +150,7 @@ class PhishREPL(BaseModel):
                 print("Missing Values, Try Again")
             else:
                 self.pick.pick_track(show_date, track_name, exact=True)
+                print(repr(self.pick))
 
     def data_menu(self):
         all_data_methods = [func for func in dir(PhishData)
@@ -173,9 +175,7 @@ class PhishREPL(BaseModel):
     def dap_menu(self):
         from phishpicks import PhishDAP  # @TODO: Fix import
 
-        all_dap_methods = [func for func in dir(PhishDAP)
-                           if callable(getattr(PhishDAP, func)) and not func.startswith('_')]
-        dap_completer = WordCompleter(all_dap_methods, ignore_case=True, WORD=True)
+        dap_completer = WordCompleter(['random', 'copy', 'clear_picks', 'clear_dap', 'dap_to_picks', 'last_copied', 'free_space', 'del'], ignore_case=True, WORD=True)
         try:
             dap = PhishDAP(pp=self.pick)
             dap.connect()
@@ -184,6 +184,44 @@ class PhishREPL(BaseModel):
             placeholder = HTML('<style color="#6A87A0">Digital Audio Player Methods</style>')
             user_input = self.session.prompt(prompt_text, placeholder=placeholder, completer=dap_completer,
                                              complete_while_typing=True, key_bindings=self.kb)
+
+            if not user_input:
+                print(repr(dap))
+            elif user_input == 'clear_picks':
+                self.pick.clear()
+                print(repr(dap))
+            elif user_input == 'clear_dap':
+                dap.clear_dap()
+                print(repr(dap))
+            elif user_input == 'copy':
+                dap.copy_to_dap()
+                print(repr(dap))
+            elif user_input == 'dap_to_picks':
+                dap.dap_to_picks()
+                print(repr(dap))
+            elif user_input == 'last_copied':
+                dap.last_copied_to_dap()
+                print(repr(dap))
+            elif user_input == 'free_space':
+                print(dap.free)
+            elif user_input.startswith('del'):
+                user_input_list = user_input.rstrip().split(" ")
+                if len(user_input_list) == 0:
+                    print('No match provided to delete')
+                else:
+                    delete_method = user_input_list.pop(0)
+                    dap.delete_from_dap(user_input_list[0])
+            elif user_input.startswith('random'):
+                if user_input == 'random':
+                    dap.pick_random_show()
+                else:
+                    user_input_list = user_input.rstrip().split(" ")
+                    random_method = user_input_list.pop(0)
+                    dap.pick_random_show(*user_input_list)
+                print(repr(dap))
+            elif user_input == 'help':
+                self.help_menu()
+
         except RuntimeError as e:
             print(e)
             self.menu = 'main'

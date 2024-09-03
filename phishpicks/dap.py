@@ -34,7 +34,7 @@ class PhishDAP(BaseModel):
             self.on_dap = PhishSelection()
             self.shows_on_dap()
             self.free_space()
-            print(f"{self.free} bytes free")
+            # print(f"{self.free} bytes free")
         else:
             raise RuntimeError(f"No Device at '{self.pp.config.dap_folder}'. Digital Audio Player Is Not Configured or Connected!")
 
@@ -47,7 +47,7 @@ class PhishDAP(BaseModel):
             shows.append(show)
         self.on_dap.extend(shows)
 
-    def pick_random_show(self, k: int = 1, exclude_played: bool = False):
+    def pick_random_show(self, k: int = 1, exclude_played: bool = True):
         if self.on_dap:
             on_dap_show_ids = [show.show_id for show in self.on_dap]
         else:
