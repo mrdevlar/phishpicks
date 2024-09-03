@@ -114,7 +114,6 @@ class PhishPicks(BaseModel):
         Args:
             **kwargs: keyword arguments to be passed to the Configuration
         """
-        # @TODO: Fix initialization
         config = Configuration(**kwargs)
         db = PhishData(config=config)
         return PhishPicks(db=db, config=config)
