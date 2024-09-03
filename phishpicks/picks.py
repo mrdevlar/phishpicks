@@ -12,6 +12,7 @@ from phishpicks import PhishData
 
 class PhishSelection(list):
     """ Special list for holding picks, these can be shows or tracks """
+
     def __init__(self, *args):
         super(PhishSelection, self).__init__(*args)
         self._map = set()
@@ -19,24 +20,26 @@ class PhishSelection(list):
     def __repr__(self):
         return "\n".join([repr(x) for x in self])
 
-    def extend(self, new_elements):
+    def extend(self, new_elements, verbose: bool = False):
         new_elements = [element for element in new_elements if element not in self._map]
         self._map.update(new_elements)
         super(PhishSelection, self).extend(new_elements)
         self.sort()
-        print("\n".join([repr(x) for x in self]))
-
-    def append(self, new_element):
-        if new_element in self._map:
+        if verbose:
             print("\n".join([repr(x) for x in self]))
+
+    def append(self, new_element, verbose: bool = False):
+        if new_element in self._map:
+            if verbose:
+                print("\n".join([repr(x) for x in self]))
         else:
             self._map.add(new_element)
             super(PhishSelection, self).append(new_element)
             self.sort()
-            print("\n".join([repr(x) for x in self]))
+            if verbose:
+                print("\n".join([repr(x) for x in self]))
 
     def subselect(self, match: str, mode: str, verbose: bool = False):
-        # @TODO: Fix Repr Error
         if len(self) == 0:
             raise ValueError('Nothing is picked')
         if mode not in ['shows', 'tracks']:
@@ -51,7 +54,6 @@ class PhishSelection(list):
         return selected_list
 
     def delete(self, match: str, mode: str, verbose: bool = False):
-        # @TODO: Fix Repr Error
         selection = self.subselect(match=match, mode=mode)
         if verbose:
             print("Deleting...")
@@ -112,7 +114,7 @@ class PhishPicks(BaseModel):
         Args:
             **kwargs: keyword arguments to be passed to the Configuration
         """
-        #@TODO: Fix initialization
+        # @TODO: Fix initialization
         config = Configuration(**kwargs)
         db = PhishData(config=config)
         return PhishPicks(db=db, config=config)
