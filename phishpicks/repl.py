@@ -445,6 +445,20 @@ def configuration_prompts() -> Configuration:
     print(f"Digital Audio Player Path set to {dap_folder}")
     print("\n")
 
+    # Enable Exhaustion Mode?
+    print("Exhaustion Mode")
+    print("Exhaustion Mode will exclude any shows that have been already played from random selection")
+    print(f"[y] or Enter, Enable Exhaustion Mode")
+    print(f"[n] Disable Exhaustion Mode")
+    prompt_text = HTML('<style color="#FFDC00">phishpicks > configuration > exhaustion_mode > </style>')
+    user_input = session.prompt(prompt_text, key_bindings=kb)
+    if user_input in ['', 'y', 'Y']:
+        exhaustion_mode = True
+    else:
+        exhaustion_mode = False
+    print(f"Exhaustion Mode set to {exhaustion_mode}")
+    print('\n')
+
     # Print all the attributes in Configuration
     # Confirm?
     # Yes / No
@@ -457,6 +471,7 @@ def configuration_prompts() -> Configuration:
     print(f"Backups Folder set to {backups_folder}")
     print(f"Backups Folder set to {media_player_path}")
     print(f"Digital Audio Player Path set to {dap_folder}")
+    print(f"Exhaustion Mode set to {exhaustion_mode}")
     print("\n")
     print("Confirm? [Y]")
     prompt_text = HTML('<style color="#FFDC00">phishpicks > configuration > configuration > </style>')
@@ -469,7 +484,8 @@ def configuration_prompts() -> Configuration:
                                media_player_path=media_player_path,
                                show_glob=show_glob,
                                venue_regex=venue_regex,
-                               dap_folder=dap_folder,)
+                               dap_folder=dap_folder,
+                               exhaustion_mode=exhaustion_mode,)
         return config
     else:
         print('Unconfigured, exiting...')
