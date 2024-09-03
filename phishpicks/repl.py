@@ -77,7 +77,6 @@ class PhishREPL(BaseModel):
                                              )
 
         if main_selection and main_selection in menus:
-            # @TODO: Fix clear
             return main_selection
         else:
             print("Please make a selection or type `help` for commands")
@@ -304,6 +303,10 @@ class PhishREPL(BaseModel):
                         self.menu = 'main'
                 elif self._menu == 'clear':
                     self.pick.clear()
+                    print(repr(self.pick))
+                    self.menu = 'main'
+                elif self._menu == 'play':
+                    self.pick.play()
                     print(repr(self.pick))
                     self.menu = 'main'
                 elif self._menu == 'help':
