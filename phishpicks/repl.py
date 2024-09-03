@@ -75,7 +75,9 @@ class PhishREPL(BaseModel):
                                              complete_while_typing=True,
                                              key_bindings=self.kb,
                                              )
+
         if main_selection and main_selection in menus:
+            # @TODO: Fix clear
             return main_selection
         else:
             print("Please make a selection or type `help` for commands")
@@ -93,6 +95,7 @@ class PhishREPL(BaseModel):
             print(repr(self.pick))
         elif user_input == 'random':
             self.pick.random_shows()
+            print(repr(self.pick))
         elif user_input == 'load_queue':
             self.pick.load_queue()
         elif user_input == 'save_queue':
@@ -126,6 +129,7 @@ class PhishREPL(BaseModel):
             print(repr(self.pick))
         elif user_input == 'random':
             self.pick.random_tracks()
+            print(repr(self.pick))
         elif user_input == 'play':
             self.pick.play()
         elif user_input == 'clear':
@@ -298,6 +302,10 @@ class PhishREPL(BaseModel):
                         self.tracks_menu()
                     except KeyboardInterrupt:
                         self.menu = 'main'
+                elif self._menu == 'clear':
+                    self.pick.clear()
+                    print(repr(self.pick))
+                    self.menu = 'main'
                 elif self._menu == 'help':
                     self.help_menu()
                     self.menu = 'main'
@@ -313,6 +321,7 @@ class PhishREPL(BaseModel):
                         # No picks whatsoever
                         self.pick.random_shows()
                         self.menu = 'shows'
+                    print(repr(self.pick))
                 elif self._menu == 'exit':
                     raise KeyboardInterrupt
             except KeyboardInterrupt:
