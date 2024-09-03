@@ -428,7 +428,7 @@ class PhishData(BaseModel):
         with self.engine.connect() as connection:
             query = select(self.shows.c.last_played).order_by(desc(self.shows.c.last_played)).limit(last_n)
             last_played_date = connection.execute(query)
-            last_played_date = [last_date[0].strftime('%Y-%m-%d') for last_date in last_played_date]
+            last_played_date = [last_date[0] for last_date in last_played_date]
             query = select(self.shows).filter(self.shows.c.last_played.in_(last_played_date))
             results = connection.execute(query)
             return [Show.from_db(row) for row in results]
