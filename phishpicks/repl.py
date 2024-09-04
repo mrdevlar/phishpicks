@@ -186,7 +186,9 @@ class PhishREPL(BaseModel):
                                          complete_while_typing=True, key_bindings=self.kb)
         user_input_list = user_input.rstrip().split(" ")
         method_name = user_input_list.pop(0)
-        if method_name in all_data_methods:
+        if method_name == 'help':
+            self.help_menu()
+        elif method_name in all_data_methods:
             method = getattr(self.pick.db, method_name)
             if user_input_list:
                 print(method(*user_input_list))
@@ -290,11 +292,21 @@ class PhishREPL(BaseModel):
             speak_help.append(" save_queue: Save the Current Picks to Queue")
             speak_help.append("    tracks : Display the Tracks of the Selected Picks")
             speak_help.append("  to_tracks: Convert Show Picks to Track Picks")
+            speak_help.append(" ")
         elif self._menu == 'tracks':
             speak_help.append("      _____ TRACKS COMMANDS _____  ")
             speak_help.append("      shows: Display the Shows of the Selected Picks")
             speak_help.append("   to_shows: Convert the Track Picks into Show Picks")
             speak_help.append(" to_special: Mark track as Special")
+            speak_help.append(" ")
+        elif self._menu == 'data':
+            all_data_methods = [func for func in dir(PhishData)
+                                if callable(getattr(PhishData, func)) and not func.startswith('_')]
+            speak_help.append('NOTE : Data commands allow you to manipulate the underlying database that runs PhishPicks')
+            speak_help.append("       This is expert mode, please see data.py for the operation of these commands")
+            speak_help.append("   _____ DATA COMMANDS _____ ")
+            speak_help.append("\n".join(all_data_methods))
+            speak_help.append(" ")
         print("\n".join(speak_help))
 
     @staticmethod
