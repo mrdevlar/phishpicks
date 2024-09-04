@@ -84,7 +84,7 @@ class PhishREPL(BaseModel):
 
     def shows_menu(self):
         show_completer = self.pick.db.all_show_dates()
-        show_completer.extend(['random', 'load_queue', 'save_queue', 'play', 'clear', 'help', 'tracks', ])
+        show_completer.extend(['random', 'load_queue', 'save_queue', 'play', 'clear', 'help', 'tracks', 'to_tracks'])
         completer = WordCompleter(show_completer, WORD=True)
         prompt_text = HTML('<style color="#FFDC00">phishpicks > shows > </style>')
         placeholder = HTML('<style color="#6A87A0">YYYY-MM-DD</style>')
@@ -105,6 +105,7 @@ class PhishREPL(BaseModel):
                 print('"random %n%" is supported')
         elif user_input == 'load_queue':
             self.pick.load_queue()
+            print(repr(self.pick))
         elif user_input == 'save_queue':
             self.pick.save_queue()
         elif user_input == 'play':
@@ -115,6 +116,10 @@ class PhishREPL(BaseModel):
             self.help_menu()
         elif user_input == 'tracks':
             self.pick.tracks()
+        elif user_input == 'to_tracks':
+            self.pick.to_tracks()
+            self.menu = 'tracks'
+            print(repr(self.pick))
         elif user_input == 'exit':
             raise KeyboardInterrupt
         else:
@@ -281,7 +286,11 @@ class PhishREPL(BaseModel):
             speak_help.append("  random %n%: Randomly Select N shows")
             speak_help.append(" ")
         elif self._menu == 'shows':
-            pass
+            speak_help.append("      _____ SHOW COMMANDS _____")
+            speak_help.append(" load_queue: Load the Queue into Picks")
+            speak_help.append(" save_queue: Save the Current Picks to Queue")
+            speak_help.append("    tracks : Display the Tracks of the Selected Picks")
+            speak_help.append("  to_tracks: Convert Show Picks to Track Picks")
         elif self._menu == 'tracks':
             pass
 
