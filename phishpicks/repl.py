@@ -42,7 +42,7 @@ class PhishREPL(BaseModel):
         if not self.diagnostic_mode:
             # This flag is set because the prompt session prevents
             # CMD from executing properly on Windows Machines
-            # This allows for testing
+            # This allows for testing of PhishREPL
             self.session = PromptSession()
 
         # @TODO: Add ctrl backspace
@@ -178,7 +178,9 @@ class PhishREPL(BaseModel):
     def dap_menu(self):
         from phishpicks import PhishDAP  # @TODO: Fix import
 
-        dap_completer = WordCompleter(['random', 'copy', 'clear_picks', 'clear_dap', 'dap_to_picks', 'last_copied', 'free_space', 'del'], ignore_case=True, WORD=True)
+        dap_completer = WordCompleter(
+            ['random', 'copy', 'clear_picks', 'clear_dap', 'dap_to_picks', 'last_copied', 'free_space', 'del'],
+            ignore_case=True, WORD=True)
         try:
             dap = PhishDAP(pp=self.pick)
             dap.connect()
@@ -190,7 +192,7 @@ class PhishREPL(BaseModel):
 
             if not user_input:
                 print(repr(dap))
-            elif user_input == 'clear_picks':
+            elif user_input == 'clear_picks' or user_input == 'clear':
                 self.pick.clear()
                 print(repr(dap))
             elif user_input == 'clear_dap':
@@ -250,6 +252,18 @@ class PhishREPL(BaseModel):
         speak_help.append("    Space: continues text")
         speak_help.append("    Enter: submits command")
         speak_help.append(" ")
+
+        if self._menu == 'dap':
+            speak_help.append(" _____ DAP COMMANDS _____ ")
+            speak_help.append("copy : Copy Picks to DAP")
+            speak_help.append("clear_dap: Delete ALL DAP Contents")
+            speak_help.append("clear_picks: Clear ALL Picks (same as regular clear)")
+            speak_help.append("del %match%: Delete from DAP specific match")
+            speak_help.append("dap_to_picks: Load Picks List with DAP Content")
+            speak_help.append("last_copied: Load Picks with Last Copied Shows")
+            speak_help.append("free_space: Show Free Space on DAP")
+            speak_help.append("random %n%: Randomly Select N shows")
+
         print("\n".join(speak_help))
 
     @staticmethod
@@ -328,7 +342,7 @@ class PhishREPL(BaseModel):
                 elif self._menu == 'exit':
                     raise KeyboardInterrupt
             except KeyboardInterrupt:
-                #@TODO: Random exit lyrics
+                # @TODO: Random exit lyrics
                 print("Surrender to the Flow")
                 self.pick.db.backup_all()
                 break
@@ -497,7 +511,7 @@ def configuration_prompts() -> Configuration:
                                show_glob=show_glob,
                                venue_regex=venue_regex,
                                dap_folder=dap_folder,
-                               exhaustion_mode=exhaustion_mode,)
+                               exhaustion_mode=exhaustion_mode, )
         return config
     else:
         print('Unconfigured, exiting...')
