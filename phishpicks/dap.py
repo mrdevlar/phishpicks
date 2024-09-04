@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any
 from pydantic import BaseModel
 from phishpicks import PhishPicks, PhishSelection
-import pdb
 
 
 class PhishDAP(BaseModel):
@@ -123,15 +122,3 @@ class PhishDAP(BaseModel):
             folder = Path(self.pp.config.phish_folder) / pick.folder_path
             size += sum([file.stat().st_size for file in folder.glob('**/*')])
         return size
-
-
-# pp = PhishPicks.load()
-# dp = PhishDAP(pp=pp)
-# dp.dap_to_picks()
-# dp.update_played()
-
-# # dp.clear_dap()
-# dp.pick_random_show(3)
-# dp.copy_to_dap()
-# dp.last_copied_to_dap(3)
-# print(dp)

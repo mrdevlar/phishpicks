@@ -4,22 +4,14 @@ from datetime import datetime
 from typing import Callable, Iterable, Any
 from phishpicks import Configuration, PhishData, PhishPicks
 from pydantic import BaseModel
-from prompt_toolkit.completion import WordCompleter, Completer, CompleteEvent, Completion
+from prompt_toolkit.completion import WordCompleter, CompleteEvent, Completion
 from prompt_toolkit.completion import Completer
 from prompt_toolkit import PromptSession
 from prompt_toolkit.document import Document
-from prompt_toolkit.shortcuts import CompleteStyle
-from prompt_toolkit.keys import Keys
-from prompt_toolkit.key_binding import KeyBindings, KeyPress
+from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.formatted_text import HTML
-from prompt_toolkit.styles import Style
-from prompt_toolkit import prompt
-import pdb
-import inspect
 
 
-# @TODO: Add ctrl backspace
-# @TODO: Add ctrl arrows
 class PhishREPL(BaseModel):
     pick: PhishPicks
     kb: Any = None

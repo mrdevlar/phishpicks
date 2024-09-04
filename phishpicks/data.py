@@ -755,31 +755,3 @@ class PhishData(BaseModel):
             results = connection.execute(query)
             return [Show.from_db(row) for row in results]
 
-# Not configured Path
-# conf = Configuration()
-# conf.create_configuration_folder()
-# conf.save_to_json()
-# pd = PhishData(config=conf)
-# print(pd)
-# pd.create()
-# pd.populate()
-# check_folders = conf.total_phish_folders() == pd.total_shows()
-# print(check_folders)
-
-# # # Already Configured Path
-# conf = Configuration.from_json()
-# pd = PhishData(config=conf)
-# pd.drop_all()
-# # pd.backup_special()
-# pd.restore_special()
-# pd.all_show_dates()
-# pd.all_track_names()
-# pd.tracks_by_name('Ghost')
-# print(conf.is_configured())
-# pd.last_played_shows(1)
-# pd.restore_last_played()
-# print(pd.total_shows())
-
-# Delete Path
-# conf = Configuration.from_json()
-# conf.delete_configuration_folder()

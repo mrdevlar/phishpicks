@@ -5,7 +5,7 @@ import subprocess
 import shlex
 from pathlib import Path
 from typing import Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from phishpicks import Configuration
 from phishpicks import PhishData
 
@@ -331,26 +331,3 @@ class PhishPicks(BaseModel):
                                    stderr=subprocess.PIPE,
                                    stdin=subprocess.PIPE,
                                    shell=True)
-
-# def main():
-#     pp = PhishPicks.load()
-#     pp.random()
-#     pp.play()
-# pp = PhishPicks.load()
-# pp.random()
-# pp.random()
-# pp.play()
-# pp.tracks()
-# pp.to_tracks()
-# pp.pick_track("2023-09-02", "Ghost")
-# pp.pick_track("2019-07-14", "Mercury")
-# pp.play()
-# pp.clear()
-# date, track = pp.extract_date("2019-07-14 Mercury")
-# pp.pick_track(date, track, exact=False)
-# pp.to_special()
-# pp.pick_track("2012-06-29", "Possum")
-# pp.shows()
-# print(pp)
-# pp.play()
-# print(pp)

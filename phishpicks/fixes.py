@@ -207,12 +207,3 @@ def validate_tags(phish_folder: Path = Path("Z://Music//Phish")):
         out_set.update(missing)
     return out_set
 
-
-# out_set = validate_tags()
-# print(out_set)
-
-# fix_shows = [
-#     WindowsPath('Z:/Music/Phish/Phish 1999-06-30 Verizon Wireless Amphitheater Kansas City Bonner Springs, KS, USA'),
-#
-# ]
-# fix_missing_tags(str(fix_shows[0]), venue="Bonner Springs")
