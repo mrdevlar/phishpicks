@@ -92,9 +92,17 @@ class PhishREPL(BaseModel):
                                          complete_while_typing=True, key_bindings=self.kb)
         if not user_input:
             print(repr(self.pick))
-        elif user_input == 'random':
-            self.pick.random_shows()
-            print(repr(self.pick))
+        elif user_input.startswith('random'):
+            random_split = user_input.rstrip().split(" ")
+            if len(random_split) == 1:
+                self.pick.random_shows()
+                print(repr(self.pick))
+            if len(random_split) == 2:
+                n = random_split[1]
+                self.pick.random_shows(n)
+                print(repr(self.pick))
+            else:
+                print('"random %n%" is supported')
         elif user_input == 'load_queue':
             self.pick.load_queue()
         elif user_input == 'save_queue':
@@ -126,9 +134,17 @@ class PhishREPL(BaseModel):
                                          complete_while_typing=True, key_bindings=self.kb)
         if not user_input:
             print(repr(self.pick))
-        elif user_input == 'random':
-            self.pick.random_tracks()
-            print(repr(self.pick))
+        elif user_input.startswith('random'):
+            random_split = user_input.rstrip().split(" ")
+            if len(random_split) == 1:
+                self.pick.random_tracks()
+                print(repr(self.pick))
+            if len(random_split) == 2:
+                n = random_split[1]
+                self.pick.random_tracks(n)
+                print(repr(self.pick))
+            else:
+                print('"random %n%" is supported')
         elif user_input == 'play':
             self.pick.play()
         elif user_input == 'clear':
@@ -235,16 +251,16 @@ class PhishREPL(BaseModel):
         speak_help = list()
         speak_help.append(" ")
         speak_help.append(" _____ COMMANDS _____ ")
-        speak_help.append("     help: This List")
-        speak_help.append("    shows: Select Shows")
-        speak_help.append("   tracks: Select Tracks")
-        speak_help.append("   random: Random Picks")
-        speak_help.append("configure: Launch Configuration Wizard")
-        speak_help.append("     data: Launch Database Operations")
-        speak_help.append("      dap: Digital Audio Player Functions")
-        speak_help.append("     play: Play Selection with Media Player")
-        speak_help.append("    clear: Clear Picks")
-        speak_help.append("     exit: Leave")
+        speak_help.append("      help: This List")
+        speak_help.append("     shows: Select Shows")
+        speak_help.append("    tracks: Select Tracks")
+        speak_help.append("random %n%: Random %n% Picks")
+        speak_help.append(" configure: Launch Configuration Wizard")
+        speak_help.append("      data: Launch Database Operations")
+        speak_help.append("       dap: Digital Audio Player Functions")
+        speak_help.append("      play: Play Selection with Media Player")
+        speak_help.append("     clear: Clear Picks")
+        speak_help.append("      exit: Leave")
         speak_help.append(" ")
         speak_help.append(" _____ KEYBOARD _____ ")
         speak_help.append("Backspace: return to main menu / exit")
@@ -254,15 +270,20 @@ class PhishREPL(BaseModel):
         speak_help.append(" ")
 
         if self._menu == 'dap':
-            speak_help.append(" _____ DAP COMMANDS _____ ")
-            speak_help.append("copy : Copy Picks to DAP")
-            speak_help.append("clear_dap: Delete ALL DAP Contents")
-            speak_help.append("clear_picks: Clear ALL Picks (same as regular clear)")
-            speak_help.append("del %match%: Delete from DAP specific match")
+            speak_help.append("    _____ DAP COMMANDS _____ ")
+            speak_help.append("       copy : Copy Picks to DAP")
+            speak_help.append("   clear_dap: Delete ALL DAP Contents")
+            speak_help.append(" clear_picks: Clear ALL Picks (same as regular clear)")
+            speak_help.append(" del %match%: Delete from DAP specific match")
             speak_help.append("dap_to_picks: Load Picks List with DAP Content")
-            speak_help.append("last_copied: Load Picks with Last Copied Shows")
-            speak_help.append("free_space: Show Free Space on DAP")
-            speak_help.append("random %n%: Randomly Select N shows")
+            speak_help.append(" last_copied: Load Picks with Last Copied Shows")
+            speak_help.append("  free_space: Show Free Space on DAP")
+            speak_help.append("  random %n%: Randomly Select N shows")
+            speak_help.append(" ")
+        elif self._menu == 'shows':
+            pass
+        elif self._menu == 'tracks':
+            pass
 
         print("\n".join(speak_help))
 
