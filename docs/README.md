@@ -1,6 +1,16 @@
 # PhishPicks
 
-An automatic system for playing randomized Phish shows.
+A command-line CRUD for selecting, playing and randomizing Phish shows/tracks on disk or with a digital music player.
+
+## Shows
+
+![Shows Operation](shows.gif)
+
+## Tracks
+![Tracks Operation](tracks.gif)
+
+## Digital Audio Player
+![DAP Operation](dap.gif)
 
 
 [The Spreasheet](https://docs.google.com/spreadsheets/u/0/d/1yAXu83gJBz08cW5OXoqNuN1IbvDXD2vCrDKj4zn1qmU/htmlview?pli=1#)
@@ -44,7 +54,7 @@ I hope that it might turn out to be useful to more than myself.
 - `phishpicks` to start
 
 ## Commands
-- `help` - to list all commands, like below
+- `help` - to list all commands, like below, within a menu it'll also give you menu specific help
 ```
 _____ COMMANDS _____
      help: This List
@@ -70,7 +80,3 @@ Backspace: return to main menu / exit
 There are plenty of things you can do with the database outside of normal operations (picking and playing). Any method in the `data.py` file can be called from this menu.
 
 Can be used to `update` when new folders are added, as well as `drop_all` and `populate` to reset everything. Generally, update is done on launch of `phishpicks` also. 
-
-## TODOS
-- Make gifs of operations to stick into this README.
-- Make a CONTRIBUTORS file
