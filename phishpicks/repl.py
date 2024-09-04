@@ -161,8 +161,7 @@ class PhishREPL(BaseModel):
         elif user_input == 'to_shows':
             self.pick.to_shows()
             self.menu = 'shows'
-            self.shows_menu()
-            raise KeyboardInterrupt
+            print(repr(self.pick))
         elif user_input == 'to_special':
             self.pick.to_special()
             self.pick.db.backup_track_special()
@@ -259,7 +258,7 @@ class PhishREPL(BaseModel):
         speak_help.append("      help: This List")
         speak_help.append("     shows: Select Shows")
         speak_help.append("    tracks: Select Tracks")
-        speak_help.append("random %n%: Random %n% Picks")
+        speak_help.append("random %n%: Random Select N Picks")
         speak_help.append(" configure: Launch Configuration Wizard")
         speak_help.append("      data: Launch Database Operations")
         speak_help.append("       dap: Digital Audio Player Functions")
@@ -283,17 +282,19 @@ class PhishREPL(BaseModel):
             speak_help.append("dap_to_picks: Load Picks List with DAP Content")
             speak_help.append(" last_copied: Load Picks with Last Copied Shows")
             speak_help.append("  free_space: Show Free Space on DAP")
-            speak_help.append("  random %n%: Randomly Select N shows")
+            speak_help.append("  random %n%: Randomly Select N Shows")
             speak_help.append(" ")
         elif self._menu == 'shows':
-            speak_help.append("      _____ SHOW COMMANDS _____")
+            speak_help.append("      _____ SHOWS COMMANDS _____")
             speak_help.append(" load_queue: Load the Queue into Picks")
             speak_help.append(" save_queue: Save the Current Picks to Queue")
             speak_help.append("    tracks : Display the Tracks of the Selected Picks")
             speak_help.append("  to_tracks: Convert Show Picks to Track Picks")
         elif self._menu == 'tracks':
-            pass
-
+            speak_help.append("      _____ TRACKS COMMANDS _____  ")
+            speak_help.append("      shows: Display the Shows of the Selected Picks")
+            speak_help.append("   to_shows: Convert the Track Picks into Show Picks")
+            speak_help.append(" to_special: Mark track as Special")
         print("\n".join(speak_help))
 
     @staticmethod
