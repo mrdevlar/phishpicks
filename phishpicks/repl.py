@@ -76,7 +76,7 @@ class PhishREPL(BaseModel):
 
     def shows_menu(self):
         show_completer = self.pick.db.all_show_dates()
-        show_completer.extend(['random', 'load_queue', 'save_queue', 'play', 'clear', 'help', 'tracks', 'to_tracks'])
+        show_completer.extend(['random', 'load_queue', 'save_queue', 'play', 'clear', 'help', 'tracks', 'to_tracks', 'exit'])
         completer = WordCompleter(show_completer, WORD=True)
         prompt_text = HTML('<style color="#FFDC00">phishpicks > shows > </style>')
         placeholder = HTML('<style color="#6A87A0">YYYY-MM-DD</style>')
@@ -155,8 +155,15 @@ class PhishREPL(BaseModel):
             self.menu = 'shows'
             print(repr(self.pick))
         elif user_input == 'to_special':
-            self.pick.to_special()
-            self.pick.db.backup_track_special()
+            if self.pick.mode == 'tracks':
+                self.pick.to_special()
+                self.pick.db.backup_track_special()
+            else:
+                print('No tracks in picks')
+        elif user_input == 'specials':
+            self.pick.mode = 'tracks'
+            self.pick.all_special()
+            print(repr(self.pick))
         elif user_input == 'exit':
             raise KeyboardInterrupt
         else:
@@ -289,6 +296,7 @@ class PhishREPL(BaseModel):
             speak_help.append("      _____ TRACKS COMMANDS _____  ")
             speak_help.append("      shows: Display the Shows of the Selected Picks")
             speak_help.append("   to_shows: Convert the Track Picks into Show Picks")
+            speak_help.append("   specials: Load all Special Tracks into Picks")
             speak_help.append(" to_special: Mark track as Special")
             speak_help.append(" ")
         elif self._menu == 'data':
@@ -555,7 +563,7 @@ def configuration_prompts() -> Configuration:
 
 class DateTrackCompleter(Completer):
     def __init__(self, date_completer: list, tracks_from_date: Callable):
-        date_completer.extend(['random', 'play', 'clear', 'shows', 'to_special', 'to_shows', 'exit'])
+        date_completer.extend(['help', 'random', 'play', 'clear', 'shows', 'to_special', 'to_shows', 'specials', 'exit'])
         self.date_completer = WordCompleter(date_completer, ignore_case=True, WORD=True)
         self.tracks_from_date = tracks_from_date
 
