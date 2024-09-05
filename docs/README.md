@@ -83,3 +83,8 @@ Backspace: return to main menu / exit
 There are plenty of things you can do with the database outside of normal operations (picking and playing). Any method in the `data.py` file can be called from this menu.
 
 Can be used to `update` when new folders are added, as well as `drop_all` and `populate` to reset everything. Generally, update is done on launch of `phishpicks` also. 
+
+## TODOS
+- More fine-grained manipulation of Picks selection, like filtering and removing rather than clearing and restarting. Requires a sensible syntax.
+- Completer classes for function parameterization. So `random` displays `n` and perhaps the docstring in the data menu.
+- Frontend code requires a refactor. 
