@@ -2,6 +2,8 @@
 
 A command-line CRUD for selecting, playing and randomizing Phish shows/tracks on disk or with a digital music player.
 
+[![justforfunnoreally.dev badge](https://img.shields.io/badge/justforfunnoreally-dev-9ff)](https://justforfunnoreally.dev)
+
 ## Shows
 
 ![Shows Operation](shows.gif)
