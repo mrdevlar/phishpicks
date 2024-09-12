@@ -49,3 +49,13 @@ def test_random_tracks(settings):
     pp.clear()
     assert len(pp.picks) == 0
     pp.db.engine.dispose()
+
+
+def test_to_special(settings):
+    pp = pp_load(settings)
+    pp.random_tracks(1)
+    pp.to_special()
+    assert len(pp.picks) == 1
+    for track in pp.picks:
+        assert track.special is True
+    pp.db.engine.dispose()

@@ -256,7 +256,9 @@ class PhishPicks(BaseModel):
         if self._mode == 'shows':
             [self.db.update_special_show(show) for show in self._picks]
         elif self._mode == 'tracks':
-            [self.db.update_special_track(track) for track in self._picks]
+            for track in self._picks:
+                self.db.update_special_track(track)
+                track.special = True
         else:
             raise ValueError('Unknown mode')
 
