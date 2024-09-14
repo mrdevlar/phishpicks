@@ -160,6 +160,7 @@ class PhishREPL(BaseModel):
                 self.pick.db.backup_track_special()
             else:
                 print('No tracks in picks')
+            print(repr(self.pick))
         elif user_input == 'specials':
             self.pick.mode = 'tracks'
             self.pick.all_special()
