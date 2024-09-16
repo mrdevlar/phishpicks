@@ -76,7 +76,8 @@ class PhishREPL(BaseModel):
 
     def shows_menu(self):
         show_completer = self.pick.db.all_show_dates()
-        show_completer.extend(['random', 'load_queue', 'save_queue', 'play', 'clear', 'help', 'tracks', 'to_tracks', 'exit'])
+        show_completer.extend(
+            ['random', 'load_queue', 'save_queue', 'play', 'clear', 'help', 'tracks', 'to_tracks', 'exit'])
         completer = WordCompleter(show_completer, WORD=True)
         prompt_text = HTML('<style color="#FFDC00">phishpicks > shows > </style>')
         placeholder = HTML('<style color="#6A87A0">YYYY-MM-DD</style>')
@@ -95,6 +96,7 @@ class PhishREPL(BaseModel):
                 print(repr(self.pick))
             else:
                 print('"random %n%" is supported')
+        # @TODO: Add yrandom : random_by_year
         elif user_input == 'load_queue':
             self.pick.load_queue()
             print(repr(self.pick))
@@ -303,7 +305,8 @@ class PhishREPL(BaseModel):
         elif self._menu == 'data':
             all_data_methods = [func for func in dir(PhishData)
                                 if callable(getattr(PhishData, func)) and not func.startswith('_')]
-            speak_help.append('NOTE : Data commands allow you to manipulate the underlying database that runs PhishPicks')
+            speak_help.append(
+                'NOTE : Data commands allow you to manipulate the underlying database that runs PhishPicks')
             speak_help.append("       This is expert mode, please see data.py for the operation of these commands")
             speak_help.append("   _____ DATA COMMANDS _____ ")
             speak_help.append("\n".join(all_data_methods))
@@ -564,7 +567,8 @@ def configuration_prompts() -> Configuration:
 
 class DateTrackCompleter(Completer):
     def __init__(self, date_completer: list, tracks_from_date: Callable):
-        date_completer.extend(['help', 'random', 'play', 'clear', 'shows', 'to_special', 'to_shows', 'specials', 'exit'])
+        date_completer.extend(
+            ['help', 'random', 'play', 'clear', 'shows', 'to_special', 'to_shows', 'specials', 'exit'])
         self.date_completer = WordCompleter(date_completer, ignore_case=True, WORD=True)
         self.tracks_from_date = tracks_from_date
 
