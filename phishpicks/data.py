@@ -556,6 +556,22 @@ class PhishData(BaseModel):
             results = connection.execute(query)
             return [Show.from_db(row) for row in results]
 
+    def random_year_shows(self, year: int, k: int = 1, exclude_played: bool = None, exclude_show_ids: list = None):
+        if not exclude_played:
+            exclude_played = self.config.exhaustion_mode
+        if exclude_show_ids is None:
+            exclude_show_ids = []
+        with (self.engine.connect() as connection):
+            query = select(self.shows)
+            if exclude_show_ids:
+                query = query.where(~self.shows.c.show_id.in_(exclude_show_ids))
+            if exclude_played:
+                query = query.where(self.shows.c.times_played == 0)
+            query = query.where(func.strftime('%Y', self.shows.c.date) == str(year))
+            query = query.order_by(func.random()).limit(k)
+            results = connection.execute(query)
+            return [Show.from_db(row) for row in results]
+
     def random_tracks(self, k: int = 1):
         with self.engine.connect() as connection:
             query = select(self.tracks).order_by(func.random()).limit(k)
@@ -754,4 +770,3 @@ class PhishData(BaseModel):
                      )
             results = connection.execute(query)
             return [Show.from_db(row) for row in results]
-

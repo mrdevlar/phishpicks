@@ -136,6 +136,13 @@ class PhishPicks(BaseModel):
         selected_shows = self.db.random_shows(k=k, exclude_played=exclude_played, exclude_show_ids=exclude_show_ids)
         self.picks.extend(selected_shows)
 
+    def random_year_shows(self, year: int, k: int = 1, exclude_played: bool = None, exclude_show_ids: list = None):
+        if not exclude_played:
+            exclude_played = self.config.exhaustion_mode
+        self.mode = 'shows'
+        selected_shows = self.db.random_year_shows(year=year, k=k, exclude_played=exclude_played, exclude_show_ids=exclude_show_ids)
+        self.picks.extend(selected_shows)
+
     def random_tracks(self, k: int = 1):
         """
         Randomly adds k tracks to picks
