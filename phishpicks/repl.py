@@ -77,7 +77,7 @@ class PhishREPL(BaseModel):
     def shows_menu(self):
         show_completer = self.pick.db.all_show_dates()
         show_completer.extend(
-            ['random', 'load_queue', 'save_queue', 'play', 'clear', 'help', 'tracks', 'to_tracks', 'exit'])
+            ['random', 'load_queue', 'save_queue', 'play', 'clear', 'help', 'tracks', 'to_tracks', 'to_special', 'exit'])
         completer = WordCompleter(show_completer, WORD=True)
         prompt_text = HTML('<style color="#FFDC00">phishpicks > shows > </style>')
         placeholder = HTML('<style color="#6A87A0">YYYY-MM-DD</style>')
@@ -114,6 +114,12 @@ class PhishREPL(BaseModel):
             self.pick.to_tracks()
             self.menu = 'tracks'
             print(repr(self.pick))
+        elif user_input == 'to_special':
+            if self.pick.mode == 'shows':
+                self.pick.to_special()
+                self.pick.db.backup_show_special()
+            else:
+                print('No shows in picks')
         elif user_input == 'exit':
             raise KeyboardInterrupt
         else:
