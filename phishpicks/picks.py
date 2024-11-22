@@ -274,6 +274,7 @@ class PhishPicks(BaseModel):
             raise NotImplementedError("to_update is not available in 'tracks' mode")
         elif self._mode == 'shows':
             for show in self._picks:
+                show.times_played += 1
                 self.db.update_played_show(show.date)
         else:
             raise ValueError('Unknown mode')
@@ -312,7 +313,7 @@ class PhishPicks(BaseModel):
     def subselect(self, match: str, verbose: bool = False):
         self.picks.subselect(match, self._mode, verbose)
 
-    def play(self, enqueue: bool = False, update: bool = True):
+    def play(self, enqueue: bool = False, update: bool = False):
         """
         Plays the selected picks with your media player
         Args:
