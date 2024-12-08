@@ -1,10 +1,10 @@
 [tool.poetry]
 name = "phishpicks"
-version = "1.0.0"
+version = "1.0.1"
 description = "Tooling for playing and copying Phish albums"
 authors = ["Richard Podkolinski <devlar@gmail.com>"]
 license = "GPL v3"
-readme = "README.md"
+readme = "docs/README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
