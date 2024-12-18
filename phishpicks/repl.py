@@ -497,7 +497,7 @@ def configuration_prompts() -> Configuration:
     print("\n")
 
     # What is your media_player_path
-    # [0] "C://Program Files (x86)//Winamp//winamp.exe"
+    # [0] "C://Program Files//foobar2000//foobar2000.exe"
     # OR Manually enter a media_player_path
     print("Media Player Path")
     print(f"[0] {Configuration.model_fields['media_player_path'].default}")

@@ -12,7 +12,7 @@ class Configuration(BaseModel):
     config_folder: str = str(Path(os.path.expanduser("~/.phishpicks")))
     backups_folder: str = str(Path(os.path.expanduser("~/.phishpicks_backups")))
     phish_folder: str = str(Path("Z://Music//Phish"))
-    media_player_path: str = str(Path("C://Program Files (x86)//Winamp//winamp.exe"))
+    media_player_path: str = str(Path("C://Program Files//foobar2000//foobar2000.exe"))
     phish_db: str = "phish.db"
     show_glob: str = "Phish [0-9]*"
     venue_regex: str = r'Phish \d\d\d\d-\d\d-\d\d (.*?.*)'
