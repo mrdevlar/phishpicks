@@ -3,7 +3,7 @@ from datetime import date, datetime
 from pathlib import Path
 import re
 import json
-from typing import Any, Optional
+from typing import Any, Optional, List, Tuple
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, Date, DateTime, ForeignKey, Index, \
     select, inspect, Boolean, update, func, distinct, desc
 from sqlalchemy.sql import text, delete
@@ -159,9 +159,9 @@ class PhishData(BaseModel):
             with open(backup_json, 'r') as file:
                 backup_list = json.load(file)
             if backup_list:
-                special_tracks = [self.track_by_date_name(show_date, name, exact=True)[1] for show_date, name in
+                special_tracks = [self.track_by_date_name(show_date, name, exact=True) for show_date, name in
                                   backup_list]
-                for track in special_tracks:
+                for show, track in special_tracks[0]:
                     self.update_special_track(track)
 
     def backup_show_special(self, verbose: bool = False):
@@ -643,7 +643,7 @@ class PhishData(BaseModel):
                 raise ValueError('No Show Found')
             return results[0]
 
-    def track_by_date_name(self, show_date: str, track_name: str, exact: bool = False) -> tuple[Show, Track]:
+    def track_by_date_name(self, show_date: str, track_name: str, exact: bool = False) -> list[tuple[Show, Track]]:
         """
         Select a Unique Track and Show
         This should only return one value, as the date track combo is unique.
@@ -672,12 +672,9 @@ class PhishData(BaseModel):
             results = connection.execute(query)
             show_fields_len = len(Show.model_fields)  # Total number of fields to split the tuple on
             results = [(Show.from_db(row[:show_fields_len]), Track.from_db(row[show_fields_len:])) for row in results]
-            if len(results) > 1:
-                print(results)
-                raise IndexError('Multiple Tracks Found')
-            elif not results:
+            if not results:
                 raise IndexError('No Track Found')
-            return results[0]
+            return results
 
     def tracks_by_name(self, track_name: str, exact: bool = False) -> list[Track]:
         with self.engine.connect() as connection:

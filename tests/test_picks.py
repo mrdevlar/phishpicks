@@ -59,3 +59,12 @@ def test_to_special(settings):
     for track in pp.picks:
         assert track.special is True
     pp.db.engine.dispose()
+
+def test_multiple_track_names(settings):
+    # Regression Test
+    # Track select: 2018-12-30 Tube
+    # Track select: 2021-08-08 Twist
+    pp = pp_load(settings)
+    pp.pick_track('2025-08-22', 'Tube')
+    assert len(pp.picks) == 2
+    pp.db.engine.dispose()
