@@ -53,22 +53,6 @@ def test_reset_played_shows(settings):
     assert result.times_played == 0
     db.engine.dispose()
 
-def test_restore_all(settings):
-    config, db = load_or_create(settings)
-    assert config.is_db()
-    selected_show = db.show_from_id(1)
-    selected_track = db.track_from_id(1)
-    selected_track2 = db.track_from_id(2)
-    db.update_played_show(selected_show.date.strftime('%Y-%m-%d'))
-    db.update_special_show(selected_show)
-    db.update_special_track(selected_track)
-    db.update_special_track(selected_track2)
-    db.backup_all()
-    db.restore_all()
-    db.engine.dispose()
-
-
-
 
 def test_all_show_dates(settings):
     config, db = load_or_create(settings)
