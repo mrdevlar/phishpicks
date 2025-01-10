@@ -3,7 +3,10 @@ from tempfile import TemporaryDirectory
 from pathlib import Path
 from pydub import AudioSegment
 from mutagen.easymp4 import EasyMP4Tags
+from phishpicks import Configuration
 
+def pytest_configure():
+    print("pytest_configure called")
 
 def track_dict(path, name, album, track_number, disc_number, artist):
     return {
@@ -75,19 +78,73 @@ def generate_fake_phish_folder(tempdir):
         {"album": "2025-05-15 In the Tail of Hailey's Comet",
          "tracks": ['Heavy Things', 'If I Could', 'Tube', "Wolfman'S Brother", 'You Enjoy Myself'],
          "extension": "mp3"},
+        {"album": "2025-08-22 In A Really Long Tube",
+         "tracks": ['Tube', 'Harry Hood', 'Tube', "Plasma", 'Light'],
+         "extension": "flac"},
     ]
     return fake_shows
 
+def test_settings_configuration(settings):
+    """
+    Tests conftest settings() and Configuration class
+    Tests alternate between settings and Configs
+    Args:
+        settings: conftest settings()
+    """
+    config = Configuration(
+        config_file=settings['config_file'],
+        config_folder=str(settings['config_folder']),
+        backups_folder=str(settings['backups_folder']),
+        phish_folder=str(settings['phish_folder']),
+        show_glob=settings['show_glob'],
+        venue_regex=settings['venue_regex'],
+        media_player_path=settings['media_player_path']
+    )
+    assert Path(settings['phish_folder']).exists()
+    assert config.is_phish_folder()
+    assert Path(settings['media_player_path']).exists()
+    assert config.is_media_player()
+    config.create_configuration_folder()
+    assert Path(settings['config_folder']).exists()
+    assert config.is_configuration_folder()
+    config.save_to_json()
+    assert (Path(settings['config_folder']) / settings['config_file']).exists()
+    assert config.is_configuration_file()
+    config.create_backups_folder()
+    assert Path(settings['backups_folder']).exists()
+    assert config.is_backups_folder()
+    db = config.create_configure_db()
+    assert config.is_db()
+    all_shows = db.all_shows()
+    assert len(all_shows) == config.total_phish_folders()
+    assert config.total_phish_folders() == 6
+    assert config.total_phish_songs() == config.total_phish_songs()
+    assert config.total_phish_songs() == 30
+    assert (Path(config.config_folder) / config.config_file).exists()
+    db.engine.dispose()
 
 @pytest.fixture(scope="session", autouse=True)
 def settings():
     with TemporaryDirectory() as tempdir:
         config_folder = Path(tempdir) / Path(".testpicks")
+        # config_folder.touch()
         backups_folder = Path(tempdir) / Path(".testpicks_backups")
+        # backups_folder.touch()
         phish_folder = Path(tempdir) / Path("PhishTest")
         phish_folder.mkdir(parents=True)
-        media_player_path = Path(tempdir) / Path('winamp.exe')
+        media_player_path = Path(tempdir) / Path('foobar')
         media_player_path.touch()
+        config_file = "phishtestpicks.json"
+
+        config_folder = str(Path(config_folder))
+        backups_folder = str(Path(backups_folder))
+        phish_folder = str(Path(phish_folder))
+        phish_db = "phish.db"
+        show_glob = "[0-9]*"
+        venue_regex = r'\d\d\d\d-\d\d-\d\d (.*?.*)'
+        media_player_path = str(Path(media_player_path))
+        afake = generate_fake_phish_folder(tempdir)
+
         # @TODO: Replace with arbitrary folder generator
         for fake in generate_fake_phish_folder(tempdir):
             show = phish_folder / Path(fake['album'])
@@ -102,15 +159,47 @@ def settings():
                     make_m4a(track_dict(show, track, fake['album'], str(idx), "3/3", "Phish"))
                 else:
                     raise ValueError("No Extension Available")
+
+        config = Configuration(
+            config_file=config_file,
+            config_folder=config_folder,
+            backups_folder=backups_folder,
+            phish_folder=phish_folder,
+            show_glob=show_glob,
+            venue_regex=venue_regex,
+            media_player_path=media_player_path,
+        )
+        assert Path(phish_folder).exists()
+        assert config.is_phish_folder()
+        assert Path(media_player_path).exists()
+        assert config.is_media_player()
+        config.create_configuration_folder()
+        assert Path(config_folder).exists()
+        assert config.is_configuration_folder()
+        config.save_to_json()
+        assert (Path(config_folder) / config_file).exists()
+        assert config.is_configuration_file()
+        config.create_backups_folder()
+        assert Path(backups_folder).exists()
+        assert config.is_backups_folder()
+        db = config.create_configure_db()
+        assert config.is_db()
+        all_shows = db.all_shows()
+        assert len(all_shows) == config.total_phish_folders()
+        assert config.total_phish_folders() == 6
+        assert config.total_phish_songs() == config.total_phish_songs()
+        assert config.total_phish_songs() == 30
+        assert (Path(config.config_folder) / config.config_file).exists()
+        db.engine.dispose()
         yield {
             'tempdir': tempdir,
-            'config_file': "phishtestpicks.json",
-            'config_folder': str(Path(config_folder)),
-            'backups_folder': str(Path(backups_folder)),
-            'phish_folder': str(Path(phish_folder)),
-            'phish_db': "phish.db",
-            'show_glob': "[0-9]*",
-            'venue_regex': r'\d\d\d\d-\d\d-\d\d (.*?.*)',
-            'media_player_path': str(Path(media_player_path)),
-            'fake': generate_fake_phish_folder(tempdir),
+            'config_file': config_file,
+            'config_folder': config_folder,
+            'backups_folder': backups_folder,
+            'phish_folder': phish_folder,
+            'phish_db': phish_db,
+            'show_glob': show_glob,
+            'venue_regex': venue_regex,
+            'media_player_path': media_player_path,
+            'fake': afake,
         }
