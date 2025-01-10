@@ -53,6 +53,20 @@ def test_reset_played_shows(settings):
     assert result.times_played == 0
     db.engine.dispose()
 
+def test_restore_all(settings):
+    config, db = load_or_create(settings)
+    assert config.is_db()
+    selected_show = db.show_from_id(1)
+    selected_track = db.track_from_id(1)
+    selected_track2 = db.track_from_id(2)
+    db.update_played_show(selected_show.date.strftime('%Y-%m-%d'))
+    db.update_special_show(selected_show)
+    db.update_special_track(selected_track)
+    db.update_special_track(selected_track2)
+    db.backup_all()
+    db.restore_all()
+    db.engine.dispose()
+
 
 def test_all_show_dates(settings):
     config, db = load_or_create(settings)
@@ -149,7 +163,7 @@ def test_tracks_by_name(settings):
 def test_track_by_date_name(settings):
     config, db = load_or_create(settings)
     assert config.is_db()
-    show, track = db.track_by_date_name('2017-03-07', 'Didn')
+    show, track = db.track_by_date_name('2017-03-07', 'Didn')[0]
     expected_show = {'show_id': 1,
                      'date': date(2017, 3, 7),
                      'venue': "center of no man's land",
@@ -177,7 +191,7 @@ def test_show_update(settings):
     config, db = load_or_create(settings)
     assert config.is_db()
 
-    fake = {"album": "2025-08-22 Being, Consciousness, Bliss",
+    fake = {"album": "2025-10-15 Being, Consciousness, Bliss",
             "tracks": ['Ghost', 'Mercury', 'Ruby Waves', "Simple", 'Sand'],
             "extension": "mp3"}
 
@@ -196,17 +210,17 @@ def test_show_update(settings):
     db.update()
 
     show_dates = db.all_show_dates()
-    assert '2025-08-22' in show_dates
+    assert '2025-10-15' in show_dates
 
-    new_show = db.show_by_date('2025-08-22')
-    assert dict(new_show) == {'show_id': 6, 'date': date(2025, 8, 22),
+    new_show = db.show_by_date('2025-10-15')
+    assert dict(new_show) == {'show_id': 7, 'date': date(2025, 10, 15),
                               'venue': 'being, consciousness, bliss',
                               'last_played': None,
                               'times_played': 0,
-                              'folder_path': '2025-08-22 Being, Consciousness, Bliss',
+                              'folder_path': '2025-10-15 Being, Consciousness, Bliss',
                               'special': False}
 
-    new_tracks = db.tracks_from_date('2025-08-22')
+    new_tracks = db.tracks_from_date('2025-10-15')
     assert len(new_tracks) == 5
     
     db.engine.dispose()

@@ -214,8 +214,15 @@ class PhishPicks(BaseModel):
             exact: Do you want an exact match?
         """
         self.mode = 'tracks'
-        show, track = self.db.track_by_date_name(show_date, track_name, exact)
-        self.picks.append(track)
+        show_tracks = self.db.track_by_date_name(show_date, track_name, exact)
+        if len(show_tracks) == 1:
+            show, track = show_tracks[0]
+            self.picks.append(track)
+        elif len(show_tracks) > 1:
+            tracks = [track[1] for track in show_tracks]
+            self.picks.extend(tracks)
+        else:
+            raise ValueError("Impossible Track Count")
 
     def pick_tracks_by_name(self, track_name: str, exact=False):
         self.mode = 'tracks'
@@ -313,13 +320,14 @@ class PhishPicks(BaseModel):
     def subselect(self, match: str, verbose: bool = False):
         self.picks.subselect(match, self._mode, verbose)
 
-    def play(self, enqueue: bool = False, update: bool = False):
+    def play(self, enqueue: bool = False, update: bool = True):
         """
         Plays the selected picks with your media player
         Args:
             enqueue: Do you want to enqueue, rather than replace, to the playlist?
             update: Do you want to update time last played?
         @TODO: Bugfix when playing more than 11 files/folders
+        @TODO: last_played function
         """
         if self._mode == 'shows':
             picks_folders = [str(Path(self.config.phish_folder)) + "\\" + pick.folder_path for pick in self.picks]
