@@ -289,7 +289,7 @@ class PhishPicks(BaseModel):
     def reset_last_played(self):
         """ Returns last_played to None and times_played to 0 """
         if self._mode == 'shows':
-            [self.db.reset_played_shows(track) for track in self._picks]
+            self.db.reset_played_shows(self._picks)
         elif self._mode == 'tracks':
             raise NotImplementedError("reset_last_played only available in 'shows' mode")
         else:

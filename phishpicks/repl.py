@@ -77,7 +77,8 @@ class PhishREPL(BaseModel):
     def shows_menu(self):
         show_completer = self.pick.db.all_show_dates()
         show_completer.extend(
-            ['random', 'last_played', 'load_queue', 'save_queue', 'play', 'clear', 'help', 'tracks', 'to_tracks', 'to_update', 'to_special', 'exit'])
+            ['random', 'last_played', 'load_queue', 'save_queue', 'play', 'clear', 'help', 'tracks', 'to_tracks',
+             'to_update', 'reset_last_played', 'to_special', 'exit'])
         completer = WordCompleter(show_completer, WORD=True)
         prompt_text = HTML('<style color="#FFDC00">phishpicks > shows > </style>')
         placeholder = HTML('<style color="#6A87A0">YYYY-MM-DD</style>')
@@ -116,6 +117,8 @@ class PhishREPL(BaseModel):
             self.pick.tracks()
         elif user_input == 'to_update':
             self.pick.to_update()
+        elif user_input == 'reset_last_played':
+            self.pick.reset_last_played()
         elif user_input == 'to_tracks':
             self.pick.to_tracks()
             self.menu = 'tracks'
