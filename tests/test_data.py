@@ -226,6 +226,18 @@ def test_restore_all(settings):
     db.engine.dispose()
 
 
+def test_count_filetype_by_year(settings):
+    config, db = load_or_create(settings)
+    assert config.is_db()
+    count = db.count_filetypes()
+
+    response = [('2017', '.flac', 15), ('2017', '.m4a', 5), ('2017', '.mp3', 10), ('2024', '.flac', 45),
+                ('2024', '.m4a', 15), ('2024', '.mp3', 30), ('2025', '.flac', 30), ('2025', '.m4a', 10),
+                ('2025', '.mp3', 20)]
+    assert count == response
+    db.engine.dispose()
+
+
 def test_reset_db(settings):
     config, db = load_or_create(settings)
     assert config.is_db()

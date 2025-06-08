@@ -767,3 +767,20 @@ class PhishData(BaseModel):
                      )
             results = connection.execute(query)
             return [Show.from_db(row) for row in results]
+
+
+    def count_filetypes(self):
+        with self.engine.connect() as connection:
+            query = (
+                select(
+                    func.strftime('%Y', self.shows.c.date).label('year'),
+                    self.tracks.c.filetype,
+                    func.count().label('count')
+                )
+                .select_from(self.tracks)
+                .group_by(func.strftime('%Y', self.shows.c.date), self.tracks.c.filetype)
+                .order_by('year', 'filetype')
+            )
+
+            results = connection.execute(query).fetchall()
+            return results
