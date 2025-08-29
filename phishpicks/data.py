@@ -704,7 +704,7 @@ class PhishData(BaseModel):
                 raise ValueError('No Show Found')
             return results[0]
 
-    def show_by_date(self, show_date: str):
+    def show_by_date(self, show_date: str, debug: bool = True) -> Show:
         date_regex = r'\d{4}-\d{2}-\d{2}'
         date_match = re.search(date_regex, show_date)
         if not date_match:
@@ -713,10 +713,11 @@ class PhishData(BaseModel):
             query = select(self.shows).where(self.shows.c.date == show_date)
             results = connection.execute(query)
             results = [Show.from_db(row) for row in results]
-            if len(results) > 1:
-                raise IndexError('Multiple Shows Found')
-            elif not results:
-                raise ValueError('No Show Found')
+            if not debug:
+                if len(results) > 1:
+                    raise IndexError('Multiple Shows Found')
+                elif not results:
+                    raise ValueError('No Show Found')
             return results[0]
 
     def shows_from_tracks(self, tracks: list[Track]) -> list[Show]:
