@@ -704,7 +704,7 @@ class PhishData(BaseModel):
                 raise ValueError('No Show Found')
             return results[0]
 
-    def show_by_date(self, show_date: str, debug: bool = True) -> Show:
+    def show_by_date(self, show_date: str, debug: bool = False) -> Show:
         date_regex = r'\d{4}-\d{2}-\d{2}'
         date_match = re.search(date_regex, show_date)
         if not date_match:

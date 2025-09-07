@@ -77,7 +77,7 @@ class PhishREPL(BaseModel):
     def shows_menu(self):
         show_completer = self.pick.db.all_show_dates()
         show_completer.extend(
-            ['random', 'last_played', 'load_queue', 'save_queue', 'play', 'clear', 'help', 'tracks', 'to_tracks',
+            ['random', 'yrandom', 'last_played', 'load_queue', 'save_queue', 'play', 'clear', 'help', 'tracks', 'to_tracks',
              'to_update', 'reset_last_played', 'to_special', 'exit'])
         completer = WordCompleter(show_completer, WORD=True)
         prompt_text = HTML('<style color="#FFDC00">phishpicks > shows > </style>')
@@ -97,7 +97,19 @@ class PhishREPL(BaseModel):
                 print(repr(self.pick))
             else:
                 print('"random %n%" is supported')
-        # @TODO: Add yrandom : random_by_year
+        elif user_input.startswith('yrandom'):
+            random_split = user_input.rstrip().split(" ")
+            if len(random_split) == 2:
+                year = int(random_split[1])
+                self.pick.random_year_shows(year=year)
+                print(repr(self.pick))
+            elif len(random_split) == 3:
+                year = int(random_split[1])
+                n = int(random_split[2])
+                self.pick.random_year_shows(year=year, k=n)
+                print(repr(self.pick))
+            else:
+                print('"yrandom %year%" or "yrandom %year% %n%" is supported')
         elif user_input == 'load_queue':
             self.pick.load_queue()
             print(repr(self.pick))
@@ -159,6 +171,19 @@ class PhishREPL(BaseModel):
                 print(repr(self.pick))
             else:
                 print('"random %n%" is supported')
+        elif user_input.startswith('yrandom'):
+            random_split = user_input.rstrip().split(" ")
+            if len(random_split) == 2:
+                year = int(random_split[1])
+                self.pick.random_year_shows(year=year)
+                print(repr(self.pick))
+            elif len(random_split) == 3:
+                year = int(random_split[1])
+                n = int(random_split[2])
+                self.pick.random_year_shows(year=year, k=n)
+                print(repr(self.pick))
+            else:
+                print('"yrandom %year%" or "yrandom %year% %n%" is supported')
         elif user_input == 'play':
             self.pick.play()
         elif user_input == 'clear':

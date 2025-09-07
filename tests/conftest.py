@@ -18,7 +18,6 @@ def track_dict(path, name, album, track_number, disc_number, artist):
         'artist': artist
     }
 
-
 def make_flac(track_dict: dict):
     silent_segment = AudioSegment.silent(duration=2000)
     file_path = Path(track_dict['path']) / f"{track_dict['track_number']} {track_dict['name']}.flac"
@@ -30,7 +29,6 @@ def make_flac(track_dict: dict):
         "discnumber": track_dict['disc_number'],
     })
 
-
 def make_mp3(track_dict: dict):
     silent_segment = AudioSegment.silent(duration=1000)
     file_path = Path(track_dict['path']) / f"{track_dict['track_number']} {track_dict['name']}.mp3"
@@ -41,7 +39,6 @@ def make_mp3(track_dict: dict):
         'TRCK': track_dict['track_number'],
         'TPOS': track_dict['disc_number']
     })
-
 
 def make_m4a(track_dict: dict):
     silent_segment = AudioSegment.silent(duration=1000)
@@ -59,7 +56,6 @@ def make_m4a(track_dict: dict):
     audio = EasyMP4Tags()
     audio.update(new_tags)
     audio.save(file_path)
-
 
 def generate_fake_phish_folder(tempdir):
     fake_shows = [
@@ -127,9 +123,7 @@ def test_settings_configuration(settings):
 def settings():
     with TemporaryDirectory() as tempdir:
         config_folder = Path(tempdir) / Path(".testpicks")
-        # config_folder.touch()
         backups_folder = Path(tempdir) / Path(".testpicks_backups")
-        # backups_folder.touch()
         phish_folder = Path(tempdir) / Path("PhishTest")
         phish_folder.mkdir(parents=True)
         media_player_path = Path(tempdir) / Path('foobar')
@@ -145,8 +139,7 @@ def settings():
         media_player_path = str(Path(media_player_path))
         afake = generate_fake_phish_folder(tempdir)
 
-        # @TODO: Replace with arbitrary folder generator
-        for fake in generate_fake_phish_folder(tempdir):
+        for fake in afake:
             show = phish_folder / Path(fake['album'])
             show.mkdir(parents=True, exist_ok=True)
             for idx, track in enumerate(fake['tracks']):

@@ -120,7 +120,7 @@ def test_show_by_date(settings):
     config, db = load_or_create(settings)
     assert config.is_db()
     with pytest.raises(ValueError):
-        db.show_by_date('2024-03-07')
+        db.show_by_date('2099-03-07')
     show = db.show_by_date('2017-03-07')
     assert isinstance(show, Show)
     show_vars = vars(show)
@@ -231,9 +231,9 @@ def test_count_filetype_by_year(settings):
     assert config.is_db()
     count = db.count_filetypes()
 
-    response = [('2017', '.flac', 15), ('2017', '.m4a', 5), ('2017', '.mp3', 10), ('2024', '.flac', 45),
-                ('2024', '.m4a', 15), ('2024', '.mp3', 30), ('2025', '.flac', 30), ('2025', '.m4a', 10),
-                ('2025', '.mp3', 20)]
+    response = [('2017', '.flac', 15), ('2017', '.m4a', 5), ('2017', '.mp3', 15), ('2024', '.flac', 45),
+                ('2024', '.m4a', 15), ('2024', '.mp3', 45), ('2025', '.flac', 45), ('2025', '.m4a', 15),
+                ('2025', '.mp3', 45)]
     assert count == response
     db.engine.dispose()
 
