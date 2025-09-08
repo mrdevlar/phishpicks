@@ -1,15 +1,9 @@
-- When started, should check configuration
-  - Prompt user to configure
-  - ~~Set folders~~
-  - ~~Create DB and Populate~~
-- Determine if M3 Player is Connected
-- Determine Free space on Player
-- Ensure you have 500-1000 MB free
-- Index Phish Folder on M3 Determine Shows
-- Randomly Select Shows to Fill M3
-- Launch Player with Add Folder
-  - ~~Winamp~~
-  - VLC
-- Queries
-  - Exclusion Mode - Last Played is null
-  - title: Tweezer but order by longest
+# TODO
+
+- [ ] Split monolithic class into smaller components
+- [ ] Eliminate magic strings
+- [ ] Refactor repetitive menu methods
+- [ ] Improve configuration flow
+- [ ] Fix import issues
+- [ ] Enhance error handling
+- [ ] Extract utility functions
