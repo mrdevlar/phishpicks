@@ -164,6 +164,11 @@ class PhishPicks(BaseModel):
         last_played = self.db.last_played_shows(last_n=last_n)
         self.picks.extend(last_played)
 
+    def most_recent(self, last_n: int = 1):
+        self.mode = 'shows'
+        most_recent = self.db.show_most_recent(last_n=last_n)
+        self.picks.extend(most_recent)
+
     def pick_show(self, date: str):
         """
         Adds a selected show to picks

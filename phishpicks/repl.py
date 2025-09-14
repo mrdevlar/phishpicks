@@ -77,8 +77,9 @@ class PhishREPL(BaseModel):
     def shows_menu(self):
         show_completer = self.pick.db.all_show_dates()
         show_completer.extend(
-            ['random', 'yrandom', 'last_played', 'load_queue', 'save_queue', 'play', 'clear', 'help', 'tracks', 'to_tracks',
-             'to_update', 'reset_last_played', 'to_special', 'exit'])
+            ['random', 'yrandom', 'last_played', 'load_queue', 'save_queue', 'play', 'clear', 'help', 'tracks',
+             'most_recent',
+             'to_tracks', 'to_update', 'reset_last_played', 'to_special', 'exit'])
         completer = WordCompleter(show_completer, WORD=True)
         prompt_text = HTML('<style color="#FFDC00">phishpicks > shows > </style>')
         placeholder = HTML('<style color="#6A87A0">YYYY-MM-DD</style>')
@@ -95,8 +96,6 @@ class PhishREPL(BaseModel):
                 n = random_split[1]
                 self.pick.random_shows(n)
                 print(repr(self.pick))
-            else:
-                print('"random %n%" is supported')
         elif user_input.startswith('yrandom'):
             random_split = user_input.rstrip().split(" ")
             if len(random_split) == 2:
@@ -108,8 +107,6 @@ class PhishREPL(BaseModel):
                 n = int(random_split[2])
                 self.pick.random_year_shows(year=year, k=n)
                 print(repr(self.pick))
-            else:
-                print('"yrandom %year%" or "yrandom %year% %n%" is supported')
         elif user_input == 'load_queue':
             self.pick.load_queue()
             print(repr(self.pick))
@@ -127,6 +124,14 @@ class PhishREPL(BaseModel):
             self.help_menu()
         elif user_input == 'tracks':
             self.pick.tracks()
+        elif user_input.startswith('most_recent'):
+            most_recent_split = user_input.rstrip().split(" ")
+            if len(most_recent_split) == 1:
+                self.pick.most_recent()
+            if len(most_recent_split) == 2:
+                n = most_recent_split[1]
+                self.pick.most_recent(n)
+            print(repr(self.pick))
         elif user_input == 'to_update':
             self.pick.to_update()
         elif user_input == 'reset_last_played':

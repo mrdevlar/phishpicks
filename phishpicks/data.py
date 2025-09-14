@@ -768,6 +768,15 @@ class PhishData(BaseModel):
             results = [Show.from_db(row) for row in results]
             return results
 
+    def show_most_recent(self, last_n=1) -> list[Show]:
+        with self.engine.connect() as connection:
+            query = select(self.shows).order_by(desc(self.shows.c.date)).limit(last_n)
+            results = connection.execute(query)
+            if results:
+                 return [Show.from_db(row) for row in results]
+            else:
+                raise Exception("No Most Recent Show Found")
+
     def all_played_show_tracks(self) -> list[Show]:
         with self.engine.connect() as connection:
             query = (select(self.shows)

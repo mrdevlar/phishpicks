@@ -211,6 +211,17 @@ def test_show_update(settings):
     
     db.engine.dispose()
 
+
+def test_show_most_recent(settings):
+    config, db = load_or_create(settings)
+    assert config.is_db()
+    # Verify the new show is detected
+    most_recent = db.show_most_recent(last_n=1)
+    assert most_recent[0].date == date(2025, 10, 15)
+    assert most_recent[0].venue == "being, consciousness, bliss"
+    db.engine.dispose()
+
+
 def test_restore_all(settings):
     config, db = load_or_create(settings)
     assert config.is_db()
