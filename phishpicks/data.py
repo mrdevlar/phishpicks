@@ -341,6 +341,8 @@ class PhishData(BaseModel):
         for file in folder.glob("*.*"):
             file_path = str(file)
             track_filetype = file.suffix
+            if track_filetype.lower() == '.zip':
+                continue
             disc_default = '0'
             # print(file)
             if file.suffix.lower() in ['.flac']:
