@@ -261,14 +261,20 @@ class PhishREPL(BaseModel):
 
             if not user_input:
                 print(repr(dap))
+            elif user_input.startswith('copy'):
+                copy_split = user_input.rstrip().split(" ")
+                if len(copy_split) == 1:
+                    dap.copy_to_dap()
+                if len(copy_split) == 2:
+                    flag = copy_split[1]
+                    flag = False if flag == 'False' else True
+                    dap.copy_to_dap(update=flag)
+                print(repr(dap))
             elif user_input == 'clear_picks' or user_input == 'clear':
                 self.pick.clear()
                 print(repr(dap))
             elif user_input == 'clear_dap':
                 dap.clear_dap()
-                print(repr(dap))
-            elif user_input == 'copy':
-                dap.copy_to_dap()
                 print(repr(dap))
             elif user_input == 'dap_to_picks':
                 dap.dap_to_picks()
