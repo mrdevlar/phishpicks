@@ -169,6 +169,28 @@ class PhishPicks(BaseModel):
         most_recent = self.db.show_most_recent(last_n=last_n)
         self.picks.extend(most_recent)
 
+    def refresh_current(self):
+        """
+        Refreshes the current shows by checking if there are shows in Phishpicks._picks,
+        saving them, clearing Phishpicks._picks, and retrieving the saved shows
+        """
+        if not self._picks:
+            print("No shows to refresh")
+            return
+
+        saved_shows = list(self._picks)
+        self._picks.clear()
+
+        if self._mode == 'shows':
+            show_dates = [show.date.strftime('%Y-%m-%d') for show in saved_shows]
+            for date_str in show_dates:
+                try:
+                    show = self.db.show_by_date(date_str)
+                    self.picks.append(show)
+                except ValueError:
+                    print(f"Cannot Find {date_str}")
+                    continue
+
     def pick_show(self, date: str):
         """
         Adds a selected show to picks
