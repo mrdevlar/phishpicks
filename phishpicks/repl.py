@@ -114,10 +114,13 @@ class PhishREPL(BaseModel):
             self.pick.save_queue()
         elif user_input == 'play':
             self.pick.play()
-        elif user_input == 'last_played':
-            #@TODO: Add #n
-            self.pick.last_played_shows()
-            print(repr(self.pick))
+        elif user_input.startswith('last_played'):
+            last_played_split = user_input.rstrip().split(" ")
+            if len(last_played_split) == 1:
+                last_played_n = last_played_split[1]
+                self.pick.last_played_shows(last_played_n)
+            else:
+                self.pick.last_played_shows()
         elif user_input == 'clear':
             self.pick.clear()
         elif user_input == 'help':
