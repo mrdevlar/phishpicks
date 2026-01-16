@@ -171,24 +171,33 @@ class PhishPicks(BaseModel):
 
     def refresh_current(self):
         """
-        Refreshes the current shows by checking if there are shows in Phishpicks._picks,
-        saving them, clearing Phishpicks._picks, and retrieving the saved shows
+        Refreshes the current picks (shows or tracks) by checking if there are items in Phishpicks._picks,
+        saving them, clearing Phishpicks._picks, and retrieving the saved items
         """
         if not self._picks:
-            print("No shows to refresh")
+            print("No picks to refresh")
             return
 
-        saved_shows = list(self._picks)
+        saved_items = list(self._picks)
         self._picks.clear()
 
         if self._mode == 'shows':
-            show_dates = [show.date.strftime('%Y-%m-%d') for show in saved_shows]
+            show_dates = [show.date.strftime('%Y-%m-%d') for show in saved_items]
             for date_str in show_dates:
                 try:
                     show = self.db.show_by_date(date_str)
                     self.picks.append(show)
                 except ValueError:
                     print(f"Cannot Find {date_str}")
+                    continue
+        elif self._mode == 'tracks':
+            track_ids = [track.track_id for track in saved_items]
+            for tid in track_ids:
+                try:
+                    track = self.db.track_from_id(tid)
+                    self.picks.append(track)
+                except (ValueError, IndexError):
+                    print(f"Cannot Find Track ID {tid}")
                     continue
 
     def pick_show(self, date: str):

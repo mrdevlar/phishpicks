@@ -16,7 +16,7 @@ class Configuration(BaseModel):
     phish_db: str = "phish.db"
     show_glob: str = "Phish [0-9]*"
     venue_regex: str = r'Phish \d\d\d\d-\d\d-\d\d (.*?.*)'
-    dap_folder: str = str(Path("E://01_Phish"))
+    dap_folder: str = str(Path("F://01_Phish"))
     exhaustion_mode: bool = True
     configured: dict = None
 
