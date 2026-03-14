@@ -3,6 +3,7 @@ import json
 import re
 import subprocess
 import shlex
+import tempfile
 from pathlib import Path
 from typing import Any
 from pydantic import BaseModel
@@ -368,14 +369,12 @@ class PhishPicks(BaseModel):
     def subselect(self, match: str, verbose: bool = False):
         self.picks.subselect(match, self._mode, verbose)
 
-    def play(self, enqueue: bool = False, update: bool = True):
+    def play(self, enqueue: bool = False, update: bool = False):
         """
         Plays the selected picks with your media player
         Args:
             enqueue: Do you want to enqueue, rather than replace, to the playlist?
             update: Do you want to update time last played?
-        @TODO: Bugfix when playing more than 11 files/folders
-        @TODO: last_played function
         """
         if self._mode == 'shows':
             picks_folders = [str(Path(self.config.phish_folder)) + "\\" + pick.folder_path for pick in self.picks]
@@ -383,13 +382,36 @@ class PhishPicks(BaseModel):
             picks_folders = [pick.file_path for pick in self.picks]
         else:
             raise ValueError('Unknown mode')
+        
+        # Create temporary m3u playlist file
+        backup_folder = Path(self.config.backups_folder)
+        backup_folder.mkdir(parents=True, exist_ok=True)
+        playlist_file = backup_folder / Path('playlist.m3u')
+        
+        # Remove existing playlist file if present (to ensure foobar has time to read it)
+        if playlist_file.exists():
+            try:
+                playlist_file.unlink()
+            except OSError:
+                pass
+        
+        with open(playlist_file, 'w', encoding='utf-8') as f:
+            for folder_path in picks_folders:
+                f.write(folder_path + '\n')
+        
+        # Print playlist contents to stdout for debugging drive issues
+        # print("\nPlaylist contents:")
+        # print("\n".join(picks_folders))
+        # print()
+        
         media_player = Path(self.config.media_player_path)
-        sep = '" "'
-        add = " /ADD " if enqueue else " "
-        cmd = 'powershell -Command' + f"""& "{media_player}"{add}"{sep.join(picks_folders)}" """
+        add = " /add=" if enqueue else " "
+        cmd = f'"{media_player}"{add}"{playlist_file}"'
+        
         if update and self._mode == 'shows':
             # Add times played to db
             [self.db.update_played_show(pick.date.strftime('%Y-%m-%d')) for pick in self.picks]
+        
         print(cmd)
         args = shlex.split(cmd)
         process = subprocess.Popen(args,
