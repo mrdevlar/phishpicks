@@ -369,7 +369,7 @@ class PhishPicks(BaseModel):
     def subselect(self, match: str, verbose: bool = False):
         self.picks.subselect(match, self._mode, verbose)
 
-    def play(self, enqueue: bool = False, update: bool = False):
+    def play(self, enqueue: bool = False, update: bool = True):
         """
         Plays the selected picks with your media player
         Args:
