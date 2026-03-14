@@ -353,6 +353,18 @@ class PhishPicks(BaseModel):
             shows = [self.db.show_by_date(show_date) for show_date in backup_list]
             self.picks.extend(shows)
 
+    def rainbow(self, first_year: int = None, last_year: int = None):
+        """ Selects a random show from each year in the database
+        Args:
+            first_year: the first year to select (default: None, take all)
+            last_year: the last year to select (default: None, take all)
+        """
+        self.mode = 'shows'
+        years = self.db.years(first_year=first_year, last_year=last_year)
+        for year in years:
+            shows = self.db.random_year_shows(year=year, k=1)
+            self.picks.extend(shows)
+
     def subselect(self, match: str, verbose: bool = False):
         self.picks.subselect(match, self._mode, verbose)
 

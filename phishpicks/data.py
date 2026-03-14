@@ -617,6 +617,18 @@ class PhishData(BaseModel):
             results = [self.clean_names(row[0]) for row in results]
             return results
 
+    def years(self, first_year: int = None, last_year: int = None) -> list:
+        """ All years with shows in the database """
+        with self.engine.connect() as connection:
+            query = select(distinct(func.strftime('%Y', self.shows.c.date))).order_by(text('1 DESC'))
+            if first_year:
+                query = query.where(func.strftime('%Y', self.shows.c.date) >= str(first_year))
+            if last_year:
+                query = query.where(func.strftime('%Y', self.shows.c.date) <= str(last_year))
+            results = connection.execute(query)
+            results = [row[0] for row in results]
+            return results
+
     @staticmethod
     def clean_names(name: str) -> str:
         name = name.replace("->", "")

@@ -77,14 +77,14 @@ class PhishREPL(BaseModel):
     def shows_menu(self):
         show_completer = self.pick.db.all_show_dates()
         show_completer.extend(
-            ['random', 'yrandom', 'last_played', 'load_queue', 'save_queue', 'play', 'clear', 'help', 'tracks',
+            ['random', 'yrandom', 'rainbow', 'last_played', 'load_queue', 'save_queue', 'play', 'clear', 'help', 'tracks',
              'most_recent',
              'to_tracks', 'to_update', 'reset_last_played', 'to_special', 'exit'])
         completer = WordCompleter(show_completer, WORD=True)
         prompt_text = HTML('<style color="#FFDC00">phishpicks > shows > </style>')
         placeholder = HTML('<style color="#6A87A0">YYYY-MM-DD</style>')
         user_input = self.session.prompt(prompt_text, placeholder=placeholder, completer=completer,
-                                         complete_while_typing=True, key_bindings=self.kb)
+                                          complete_while_typing=True, key_bindings=self.kb)
         if not user_input:
             print(repr(self.pick))
         elif user_input.startswith('random'):
@@ -106,6 +106,23 @@ class PhishREPL(BaseModel):
                 year = int(random_split[1])
                 n = int(random_split[2])
                 self.pick.random_year_shows(year=year, k=n)
+                print(repr(self.pick))
+        elif user_input.startswith('rainbow'):
+            rainbow_split = user_input.rstrip().split(" ")
+            if len(rainbow_split) == 1:
+                self.pick.rainbow()
+                print(repr(self.pick))
+            elif len(rainbow_split) == 2:
+                if rainbow_split[1].lower() == 'none':
+                    self.pick.rainbow(last_year=None)
+                else:
+                    first_year = int(rainbow_split[1])
+                    self.pick.rainbow(first_year=first_year)
+                print(repr(self.pick))
+            elif len(rainbow_split) == 3:
+                first_year = None if rainbow_split[1].lower() == 'none' else int(rainbow_split[1])
+                last_year = int(rainbow_split[2])
+                self.pick.rainbow(first_year=first_year, last_year=last_year)
                 print(repr(self.pick))
         elif user_input == 'load_queue':
             self.pick.load_queue()
