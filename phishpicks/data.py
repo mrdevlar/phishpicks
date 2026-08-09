@@ -815,3 +815,22 @@ class PhishData(BaseModel):
 
             results = connection.execute(query).fetchall()
             return results
+
+    def list_filetypes(self):
+        with self.engine.connect() as connection:
+            query = (
+                select(
+                    self.shows.c.date,
+                    self.tracks.c.filetype,
+                    func.count().label('count')
+                )
+                .select_from(self.shows.join(self.tracks, self.shows.c.show_id == self.tracks.c.show_id))
+                .group_by(self.shows.c.date, self.tracks.c.filetype)
+                .order_by(self.shows.c.date, self.tracks.c.filetype)
+            )
+
+            results = connection.execute(query).fetchall()
+            formatted_results = [
+                (row[0].strftime('%Y-%m-%d'), row[1], row[2]) for row in results
+            ]
+            return formatted_results
