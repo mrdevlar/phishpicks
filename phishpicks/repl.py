@@ -174,8 +174,12 @@ class PhishREPL(BaseModel):
             if not selected_show:
                 print("Incomplete Date, Try Again")
             else:
-                self.pick.pick_show(user_input.strip())
-                print(repr(self.pick))
+                try:
+                    self.pick.pick_show(user_input.strip())
+                except ValueError:
+                    print("Show Not Found")
+                else:
+                    print(repr(self.pick))
 
     def tracks_menu(self):
         date_completer = self.pick.db.all_show_dates()

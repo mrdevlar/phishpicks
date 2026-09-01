@@ -31,6 +31,34 @@ def test_date_completer(settings):
     rp.pick.db.engine.dispose()
 
 
+class StubSession:
+    def __init__(self, response):
+        self.response = response
+
+    def prompt(self, *args, **kwargs):
+        return self.response
+
+
+def test_show_not_found(settings, capsys):
+    rp = repl_load(settings)
+    rp.session = StubSession('2099-01-01')
+    rp.shows_menu()
+    captured = capsys.readouterr()
+    assert 'show not found' in captured.out
+    assert len(rp.pick.picks) == 0
+    rp.pick.db.engine.dispose()
+
+
+def test_show_found(settings, capsys):
+    rp = repl_load(settings)
+    rp.session = StubSession('2017-03-07')
+    rp.shows_menu()
+    captured = capsys.readouterr()
+    assert 'show not found' not in captured.out
+    assert len(rp.pick.picks) == 1
+    rp.pick.db.engine.dispose()
+
+
 def test_track_after_date_completer(settings):
     rp = repl_load(settings)
     tracks_from_date = rp.pick.db.tracks_from_date('2017-03-07')
