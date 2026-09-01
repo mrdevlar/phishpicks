@@ -242,9 +242,8 @@ def test_count_filetype_by_year(settings):
     assert config.is_db()
     count = db.count_filetypes()
 
-    response = [('2017', '.flac', 15), ('2017', '.m4a', 5), ('2017', '.mp3', 15), ('2024', '.flac', 45),
-                ('2024', '.m4a', 15), ('2024', '.mp3', 45), ('2025', '.flac', 45), ('2025', '.m4a', 15),
-                ('2025', '.mp3', 45)]
+    response = [('2017', '.m4a', 5), ('2024', '.flac', 10), ('2024', '.mp3', 5),
+                ('2025', '.flac', 5), ('2025', '.mp3', 10)]
     assert count == response
     db.engine.dispose()
 

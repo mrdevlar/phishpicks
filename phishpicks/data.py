@@ -806,7 +806,7 @@ class PhishData(BaseModel):
                     self.tracks.c.filetype,
                     func.count().label('count')
                 )
-                .select_from(self.tracks)
+                .select_from(self.tracks.join(self.shows, self.tracks.c.show_id == self.shows.c.show_id))
                 .group_by(func.strftime('%Y', self.shows.c.date), self.tracks.c.filetype)
                 .order_by('year', 'filetype')
             )
