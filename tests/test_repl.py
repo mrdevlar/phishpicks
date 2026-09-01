@@ -44,7 +44,7 @@ def test_show_not_found(settings, capsys):
     rp.session = StubSession('2099-01-01')
     rp.shows_menu()
     captured = capsys.readouterr()
-    assert 'show not found' in captured.out
+    assert 'Show Not Found' in captured.out
     assert len(rp.pick.picks) == 0
     rp.pick.db.engine.dispose()
 
@@ -54,8 +54,29 @@ def test_show_found(settings, capsys):
     rp.session = StubSession('2017-03-07')
     rp.shows_menu()
     captured = capsys.readouterr()
-    assert 'show not found' not in captured.out
+    assert 'Show Not Found' not in captured.out
     assert len(rp.pick.picks) == 1
+    rp.pick.db.engine.dispose()
+
+
+def test_tracks_no_shows_selected(settings, capsys):
+    rp = repl_load(settings)
+    rp.session = StubSession('tracks')
+    rp.shows_menu()
+    captured = capsys.readouterr()
+    assert 'No Shows Selected' in captured.out
+    assert len(rp.pick.picks) == 0
+    rp.pick.db.engine.dispose()
+
+
+def test_tracks_with_shows_selected(settings, capsys):
+    rp = repl_load(settings)
+    rp.pick.pick_show('2017-03-07')
+    rp.session = StubSession('tracks')
+    rp.shows_menu()
+    captured = capsys.readouterr()
+    assert 'No Shows Selected' not in captured.out
+    assert 'Ghost' in captured.out
     rp.pick.db.engine.dispose()
 
 

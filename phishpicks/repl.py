@@ -144,7 +144,10 @@ class PhishREPL(BaseModel):
         elif user_input == 'help':
             self.help_menu()
         elif user_input == 'tracks':
-            self.pick.tracks()
+            try:
+                self.pick.tracks()
+            except ValueError:
+                print("No Shows Selected")
         elif user_input.startswith('most_recent'):
             most_recent_split = user_input.rstrip().split(" ")
             if len(most_recent_split) == 1:
