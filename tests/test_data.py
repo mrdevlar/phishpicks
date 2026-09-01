@@ -253,8 +253,28 @@ def test_reset_db(settings):
     config, db = load_or_create(settings)
     assert config.is_db()
 
+    special_pairs = [
+        ('2024-01-01', 'ghost'),
+        ('2024-01-01', 'bouncing around the room'),
+        ('2017-03-07', "i didn't know"),
+        ('2024-04-20', 'ruby waves'),
+        ('2025-08-22', 'plasma'),
+    ]
+    for show_date, name in special_pairs:
+        track = db.track_by_date_name(show_date, name, exact=True)[0][1]
+        db.update_special_track(track)
+
+    before = {(show.date.strftime('%Y-%m-%d'), track.name) for show, track in db.all_special_show_tracks()}
+    assert set(special_pairs) <= before
+
+    db.backup_all()
+
     db.reset_db()
     assert config.is_db()
+
+    restored = db.all_special_show_tracks()
+    restored_set = {(show.date.strftime('%Y-%m-%d'), track.name) for show, track in restored}
+    assert restored_set == before
     db.engine.dispose()
 
 

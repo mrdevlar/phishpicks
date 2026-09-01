@@ -163,13 +163,11 @@ class PhishData(BaseModel):
         if backup_list:
             for show_date, name in backup_list:
                 try:
-                    track = self.track_by_date_name(show_date, name, exact=True)
-                    loaded_special_tracks.append(track)
+                    loaded_special_tracks.extend(self.track_by_date_name(show_date, name, exact=True))
                 except IndexError:
                     print(f"{show_date, name} Special Track Not Found")
-        if loaded_special_tracks:
-            for show, track in loaded_special_tracks[0]:
-                self.update_special_track(track)
+        for show, track in loaded_special_tracks:
+            self.update_special_track(track)
 
     def backup_show_special(self, verbose: bool = False):
         special_tracks = self.all_special_shows()
